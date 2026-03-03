@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=320, initial-scale=1.0">
+    <title>Stalkify - steffentchr</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background: white;
+            color: #333;
+        }
+
+        a {
+            color: #000;
+            text-decoration: none;
+        }
+
+        a:hover {
+            border-bottom: 2px solid #000;
+        }
+
+        #frame {
+            width: 380px;
+            margin: 40px auto;
+        }
+
+        h1 {
+            font-size: 80px;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+            color: #222;
+            text-shadow: 2px 2px 2px #999;
+            margin-bottom: 20px;
+        }
+
+        h1 a:hover {
+            border: none;
+        }
+
+        .tagline {
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 80px;
+            color: #333;
+        }
+
+        h2 {
+            font-size: 35px;
+            font-weight: bold;
+            text-align: center;
+            color: #222;
+            text-shadow: 1px 1px 1px #B5C6A8;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            margin: 25px 0 10px;
+        }
+
+        .playlists-table {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .playlists-table tr {
+            font-size: 13px;
+        }
+
+        .playlists-table td {
+            padding-bottom: 20px;
+            line-height: 18px;
+        }
+
+        .playlists-table .playlist-name {
+            text-align: right;
+            white-space: nowrap;
+            padding-right: 25px;
+            font-weight: bold;
+        }
+
+        .playlists-table .playlist-desc {
+            color: #333;
+        }
+
+        .playlists-table a {
+            color: #000;
+            font-weight: bold;
+        }
+
+        .discrete {
+            color: #aaa !important;
+        }
+
+        #artistsContainer {
+            width: 396px;
+            overflow: auto;
+            margin-top: 20px;
+        }
+
+        .lastfmartist {
+            width: 126px;
+            height: 126px;
+            border: 1px solid #333;
+            position: relative;
+            float: left;
+            margin: 0 3px 3px 0;
+            cursor: pointer;
+            overflow: hidden;
+            background: #BDBD1D;
+        }
+
+        .lastfmartist img {
+            width: 126px;
+            height: 126px;
+            display: block;
+        }
+
+        .lastfmartist-name {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            background: rgba(51, 51, 51, 0.9);
+            color: #fff;
+            font-size: 11px;
+            padding: 5px;
+            text-align: left;
+            line-height: 12px;
+        }
+
+        .lastfmartist-plays {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            background: rgba(51, 51, 51, 0.9);
+            color: #fff;
+            font-size: 9px;
+            padding: 3px 5px;
+            text-align: left;
+        }
+
+        .smallmeta {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin: 5px 80px;
+            line-height: 18px;
+        }
+
+        .smallmeta a {
+            color: #888;
+            text-decoration: underline;
+        }
+
+        .smallmeta a:hover {
+            text-decoration: none;
+            border: none;
+        }
+
+        footer {
+            color: #888;
+            font-size: 13px;
+            line-height: 20px;
+            margin: 100px 0 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            clear: both;
+        }
+
+        footer a {
+            color: #888;
+            text-decoration: underline;
+        }
+
+        footer a:hover {
+            text-decoration: none;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="frame">
+        <h1><a href="/">Stalkify</a></h1>
+
+        <div class="tagline">
+            Last.fm + Spotify bundled into goodness
+        </div>
+
+        <h2>steffentchr</h2>
+
+        <table class="playlists-table">
+            <tr>
+                <td class="playlist-name">recent</td>
+                <td class="playlist-desc">
+                    <a href="spotify:user:stalkify:playlist:abc123">Stalkify: steffentchr's recent</a>
+                </td>
+            </tr>
+            <tr>
+                <td class="playlist-name">all-time</td>
+                <td class="playlist-desc">
+                    <a href="spotify:user:stalkify:playlist:def456">Stalkify: steffentchr's all-time top tracks</a>
+                </td>
+            </tr>
+            <tr>
+                <td class="playlist-name">this week</td>
+                <td class="playlist-desc">
+                    <a href="spotify:user:stalkify:playlist:ghi789">Stalkify: steffentchr's top tracks this week</a>
+                </td>
+            </tr>
+            <tr>
+                <td class="playlist-name">3 months</td>
+                <td class="playlist-desc">
+                    <a href="spotify:user:stalkify:playlist:jkl012">Stalkify: steffentchr's 3-month top tracks</a>
+                </td>
+            </tr>
+            <tr>
+                <td class="playlist-name">6 months</td>
+                <td class="playlist-desc">
+                    <a href="spotify:user:stalkify:playlist:mno345">Stalkify: steffentchr's 6-months top tracks</a>
+                </td>
+            </tr>
+            <tr>
+                <td class="playlist-name">this year</td>
+                <td class="playlist-desc">
+                    <a href="spotify:user:stalkify:playlist:pqr678">Stalkify: steffentchr's top tracks this year</a>
+                </td>
+            </tr>
+        </table>
+
+        <h3>Top Artists</h3>
+
+        <div id="artistsContainer">
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png" alt="Radiohead">
+                <div class="lastfmartist-name">Radiohead</div>
+                <div class="lastfmartist-plays">2,847 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/d9c8a71f37e94b3fbce4e2be55cd6d25.png" alt="Arcade Fire">
+                <div class="lastfmartist-name">Arcade Fire</div>
+                <div class="lastfmartist-plays">1,923 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/3ab321c8aa7c4ea8aec0b44c6d7abc61.png" alt="The National">
+                <div class="lastfmartist-name">The National</div>
+                <div class="lastfmartist-plays">1,654 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/8671b3b6e98242d1ac8b6bc00a2f3f8d.png" alt="Bon Iver">
+                <div class="lastfmartist-name">Bon Iver</div>
+                <div class="lastfmartist-plays">1,432 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/f4d89cba44844e59b4e3c6e45c95ab31.png" alt="Sufjan Stevens">
+                <div class="lastfmartist-name">Sufjan Stevens</div>
+                <div class="lastfmartist-plays">1,289 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/5ec6265c24164d5e8f7e85e24f8c3e9c.png" alt="Fleet Foxes">
+                <div class="lastfmartist-name">Fleet Foxes</div>
+                <div class="lastfmartist-plays">1,156 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/d8b4f7a8c0e54e74a0f9d7b5e8e1e3f7.png" alt="Sigur Rós">
+                <div class="lastfmartist-name">Sigur Rós</div>
+                <div class="lastfmartist-plays">1,043 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/9a8e4f5b7c2d4a9f8e3b5c6d7e8f9a0b.png" alt="LCD Soundsystem">
+                <div class="lastfmartist-name">LCD Soundsystem</div>
+                <div class="lastfmartist-plays">987 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/7e4f3a5b2c1d4e6f8a9b0c1d2e3f4a5b.png" alt="Vampire Weekend">
+                <div class="lastfmartist-name">Vampire Weekend</div>
+                <div class="lastfmartist-plays">876 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f.png" alt="Grizzly Bear">
+                <div class="lastfmartist-name">Grizzly Bear</div>
+                <div class="lastfmartist-plays">754 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e.png" alt="Modest Mouse">
+                <div class="lastfmartist-name">Modest Mouse</div>
+                <div class="lastfmartist-plays">698 plays</div>
+            </div>
+
+            <div class="lastfmartist">
+                <img src="https://lastfm.freetls.fastly.net/i/u/300x300/4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d.png" alt="The Strokes">
+                <div class="lastfmartist-name">The Strokes</div>
+                <div class="lastfmartist-plays">643 plays</div>
+            </div>
+        </div>
+
+        <div class="smallmeta" style="margin-top: 40px;">
+            Click any artist to search on Spotify
+        </div>
+
+        <footer>
+            <a href="https://github.com/steffentchr/legacy-stalkify">About</a> &middot;
+            <a href="https://last.fm">Last.fm</a> &middot;
+            <a href="https://spotify.com">Spotify</a>
+        </footer>
+    </div>
+</body>
+</html>

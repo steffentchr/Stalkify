@@ -1,0 +1,213 @@
+// Stalkify Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Last.fm user tracking
+model LastfmUser {
+  id                String      @id @default(cuid())
+  username          String      @unique
+  displayName       String?
+  profileUrl        String?
+  avatarUrl         String?
+
+  // Metadata
+  firstProcessedAt  DateTime    @default(now())
+  lastProcessedAt   DateTime    @updatedAt
+  processCount      Int         @default(0)
+  viewCount         Int         @default(0)
+
+  // Relations
+  playlists         Playlist[]
+  artists           UserArtist[]
+
+  @@index([lastProcessedAt])
+  @@map("lastfm_users")
+}
+
+// Spotify playlists
+model Playlist {
+  id                String      @id @default(cuid())
+
+  // Ownership
+  userId            String
+  user              LastfmUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Playlist details
+  spotifyId         String      @unique
+  spotifyUri        String      @unique
+  name              String
+  feedType          FeedType
+
+  // Update tracking
+  updateInterval    Int         @default(60) // minutes
+  lastUpdatedAt     DateTime    @default(now())
+  nextUpdateAt      DateTime
+
+  // Stats
+  trackCount        Int         @default(0)
+  openCount         Int         @default(0)
+
+  // Relations
+  tracks            PlaylistTrack[]
+
+  @@unique([userId, feedType])
+  @@index([nextUpdateAt])
+  @@map("playlists")
+}
+
+// Playlist feed types
+enum FeedType {
+  RECENT              // Recent tracks
+  ALL_TIME            // All-time top
+  WEEKLY              // This week
+  THREE_MONTH         // 3 months
+  SIX_MONTH           // 6 months
+  YEARLY              // This year
+}
+
+// Tracks in playlists
+model PlaylistTrack {
+  id                String      @id @default(cuid())
+
+  // Playlist association
+  playlistId        String
+  playlist          Playlist    @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  // Track details (from Last.fm)
+  trackName         String
+  artistName        String
+  albumName         String?
+
+  // Spotify match
+  spotifyId         String?
+  spotifyUri        String?
+  matchedAt         DateTime?
+  matchConfidence   Float?      // 0.0-1.0
+
+  // Ordering and status
+  position          Int
+  processedAt       DateTime    @default(now())
+  addedAt           DateTime    @default(now())
+
+  @@unique([playlistId, position])
+  @@index([playlistId])
+  @@map("playlist_tracks")
+}
+
+// Cache for Last.fm → Spotify track matching
+model TrackCache {
+  id                String      @id @default(cuid())
+
+  // Search key (normalized)
+  searchKey         String      @unique // "track_name|artist_name" (lowercased)
+
+  // Last.fm details
+  trackName         String
+  artistName        String
+
+  // Spotify match
+  spotifyId         String?
+  spotifyUri        String?
+  spotifyTrackName  String?
+  spotifyArtistName String?
+
+  // Match metadata
+  matchedAt         DateTime    @default(now())
+  matchConfidence   Float?
+  matchMethod       String?     // "exact", "fuzzy", "manual"
+
+  // Stats
+  hitCount          Int         @default(1)
+  lastHitAt         DateTime    @default(now())
+
+  @@index([searchKey])
+  @@map("track_cache")
+}
+
+// User's top artists from Last.fm
+model UserArtist {
+  id                String      @id @default(cuid())
+
+  // User association
+  userId            String
+  user              LastfmUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Artist details
+  artistName        String
+  imageUrl          String?
+  playCount         Int
+
+  // Ranking
+  rank              Int
+  period            String      @default("overall") // "overall", "7day", etc.
+
+  // Metadata
+  fetchedAt         DateTime    @default(now())
+
+  @@unique([userId, artistName, period])
+  @@index([userId, period, rank])
+  @@map("user_artists")
+}
+
+// Background job tracking
+model ProcessingJob {
+  id                String      @id @default(cuid())
+
+  // Job details
+  jobId             String      @unique // BullMQ job ID
+  username          String
+  jobType           String      // "initial_process", "update"
+
+  // Status
+  status            JobStatus   @default(PENDING)
+  progress          Int         @default(0) // 0-100
+  currentStep       String?
+
+  // Results
+  playlistsCreated  Int         @default(0)
+  tracksMatched     Int         @default(0)
+  errorMessage      String?
+
+  // Timing
+  createdAt         DateTime    @default(now())
+  startedAt         DateTime?
+  completedAt       DateTime?
+
+  @@index([username])
+  @@index([status])
+  @@index([createdAt])
+  @@map("processing_jobs")
+}
+
+// Job status enum
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// Spotify OAuth tokens (for Stalkify account)
+model SpotifyAuth {
+  id                String      @id @default(cuid())
+
+  // Token details
+  accessToken       String
+  refreshToken      String
+  expiresAt         DateTime
+  scope             String
+
+  // Metadata
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("spotify_auth")
+}

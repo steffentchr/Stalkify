@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=320, initial-scale=1.0">
+    <title>Stalkify - Processing steffentchr...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background: white;
+            color: #333;
+        }
+
+        a {
+            color: #000;
+            text-decoration: none;
+        }
+
+        a:hover {
+            border-bottom: 2px solid #000;
+        }
+
+        #frame {
+            width: 380px;
+            margin: 40px auto;
+        }
+
+        h1 {
+            font-size: 80px;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+            color: #222;
+            text-shadow: 2px 2px 2px #999;
+            margin-bottom: 20px;
+        }
+
+        h1 a:hover {
+            border: none;
+        }
+
+        .tagline {
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 80px;
+            color: #333;
+        }
+
+        h2 {
+            font-size: 35px;
+            font-weight: bold;
+            text-align: center;
+            color: #222;
+            text-shadow: 1px 1px 1px #B5C6A8;
+            margin-bottom: 20px;
+        }
+
+        .bigmessage {
+            font-size: 17px;
+            font-style: italic;
+            background: #eee;
+            padding: 40px 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .loading-spinner::after {
+            content: "⏳";
+            font-size: 48px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { content: "⏳"; }
+            25% { content: "⌛"; }
+            50% { content: "⏳"; }
+            75% { content: "⌛"; }
+            100% { content: "⏳"; }
+        }
+
+        .smallmeta {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin: 5px 80px;
+            line-height: 18px;
+        }
+
+        .smallmeta a {
+            color: #888;
+            text-decoration: underline;
+        }
+
+        .smallmeta a:hover {
+            text-decoration: none;
+            border: none;
+        }
+
+        .status-table {
+            width: 100%;
+            margin-top: 40px;
+            font-size: 13px;
+        }
+
+        .status-table td {
+            padding: 8px 0;
+            line-height: 18px;
+        }
+
+        .status-table .status-name {
+            text-align: right;
+            white-space: nowrap;
+            padding-right: 25px;
+            color: #666;
+        }
+
+        .status-table .status-value {
+            color: #333;
+        }
+
+        .status-processing {
+            color: #BDBD1D !important;
+            font-style: italic;
+        }
+
+        .status-complete {
+            color: #5a8a3a !important;
+        }
+
+        footer {
+            color: #888;
+            font-size: 13px;
+            line-height: 20px;
+            margin: 100px 0 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+
+        footer a {
+            color: #888;
+            text-decoration: underline;
+        }
+
+        footer a:hover {
+            text-decoration: none;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="frame">
+        <h1><a href="/">Stalkify</a></h1>
+
+        <div class="tagline">
+            Last.fm + Spotify bundled into goodness
+        </div>
+
+        <h2>steffentchr</h2>
+
+        <div class="bigmessage">
+            Please hang on while we stalkify <strong>steffentchr</strong>
+        </div>
+
+        <div class="loading-spinner"></div>
+
+        <div class="smallmeta">
+            This might take a few long minutes...<br>
+            Fetching Last.fm data and creating Spotify playlists
+        </div>
+
+        <table class="status-table">
+            <tr>
+                <td class="status-name">Recent tracks</td>
+                <td class="status-value status-complete">✓ Created</td>
+            </tr>
+            <tr>
+                <td class="status-name">All-time top</td>
+                <td class="status-value status-complete">✓ Created</td>
+            </tr>
+            <tr>
+                <td class="status-name">This week</td>
+                <td class="status-value status-processing">Processing...</td>
+            </tr>
+            <tr>
+                <td class="status-name">3 months</td>
+                <td class="status-value">Waiting</td>
+            </tr>
+            <tr>
+                <td class="status-name">6 months</td>
+                <td class="status-value">Waiting</td>
+            </tr>
+            <tr>
+                <td class="status-name">This year</td>
+                <td class="status-value">Waiting</td>
+            </tr>
+        </table>
+
+        <footer>
+            <a href="https://github.com/steffentchr/legacy-stalkify">About</a> &middot;
+            <a href="https://last.fm">Last.fm</a> &middot;
+            <a href="https://spotify.com">Spotify</a>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=320, initial-scale=1.0">
+    <title>Stalkify - Last.fm + Spotify bundled into goodness</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background: white;
+            color: #333;
+        }
+
+        a {
+            color: #000;
+            text-decoration: none;
+        }
+
+        a:hover {
+            border-bottom: 2px solid #000;
+        }
+
+        #frame {
+            width: 380px;
+            margin: 40px auto;
+        }
+
+        h1 {
+            font-size: 80px;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+            color: #222;
+            text-shadow: 2px 2px 2px #999;
+            margin-bottom: 20px;
+        }
+
+        h1 a:hover {
+            border: none;
+        }
+
+        .tagline {
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 80px;
+            color: #333;
+        }
+
+        h2 {
+            font-size: 35px;
+            font-weight: bold;
+            text-align: center;
+            color: #222;
+            text-shadow: 1px 1px 1px #B5C6A8;
+            margin-bottom: 20px;
+        }
+
+        .search-form {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .search-form input[type="text"] {
+            font-size: 18px;
+            padding: 10px;
+            border: 1px solid #333;
+            width: 200px;
+            font-family: Helvetica, Arial, sans-serif;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .search-form input[type="submit"] {
+            font-size: 18px;
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: Helvetica, Arial, sans-serif;
+            font-weight: bold;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        .search-form input[type="submit"]:hover {
+            background: #000;
+        }
+
+        .bigmessage {
+            font-size: 17px;
+            font-style: italic;
+            background: #eee;
+            padding: 40px 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        .listen-in {
+            position: absolute;
+            right: 15px;
+            top: 40px;
+            background: #eee;
+            padding: 20px;
+            font-size: 15px;
+            width: 180px;
+        }
+
+        .listen-in h3 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 10px;
+        }
+
+        .listen-in a {
+            font-size: 12px;
+            display: block;
+            margin-bottom: 5px;
+            color: #000;
+        }
+
+        .smallmeta {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin: 5px 80px;
+            line-height: 18px;
+        }
+
+        .smallmeta a {
+            color: #888;
+            text-decoration: underline;
+        }
+
+        .smallmeta a:hover {
+            text-decoration: none;
+            border: none;
+        }
+
+        footer {
+            color: #888;
+            font-size: 13px;
+            line-height: 20px;
+            margin: 100px 0 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+
+        footer a {
+            color: #888;
+            text-decoration: underline;
+        }
+
+        footer a:hover {
+            text-decoration: none;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="frame">
+        <h1><a href="/">Stalkify</a></h1>
+
+        <div class="tagline">
+            Last.fm + Spotify bundled into goodness
+        </div>
+
+        <h2>Enter a Last.fm username</h2>
+
+        <form class="search-form" action="/user" method="get">
+            <input type="text" name="username" id="lastfm_username" placeholder="steffentchr" required>
+            <input type="submit" value="Stalkify">
+        </form>
+
+        <div class="bigmessage">
+            Stalkify creates auto-updating Spotify playlists from your Last.fm listening history.
+        </div>
+
+        <div class="smallmeta">
+            Enter any Last.fm username to generate 6 dynamic playlists: recent tracks, all-time favorites,
+            and top tracks from this week, 3 months, 6 months, and this year.
+        </div>
+
+        <footer>
+            <a href="https://github.com/steffentchr/legacy-stalkify">About</a> &middot;
+            <a href="https://last.fm">Last.fm</a> &middot;
+            <a href="https://spotify.com">Spotify</a>
+        </footer>
+    </div>
+
+    <div class="listen-in">
+        <h3>Listen in</h3>
+        <a href="/user?username=steffentchr">@steffentchr</a>
+        <a href="/user?username=rj">@rj</a>
+        <a href="/user?username=musiclover">@musiclover</a>
+        <a href="/user?username=indie_fan">@indie_fan</a>
+        <a href="/user?username=rockstar">@rockstar</a>
+    </div>
+</body>
+</html>

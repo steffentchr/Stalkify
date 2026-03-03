@@ -1,0 +1,329 @@
+/* Stalkify - Legacy Design Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  background: white;
+  color: #333;
+}
+
+a {
+  color: #000;
+  text-decoration: none;
+}
+
+a:hover {
+  border-bottom: 2px solid #000;
+}
+
+#frame {
+  width: 380px;
+  margin: 40px auto;
+}
+
+/* Typography */
+
+h1 {
+  font-size: 80px;
+  text-transform: uppercase;
+  font-weight: bold;
+  text-align: center;
+  color: #222;
+  text-shadow: 2px 2px 2px #999;
+  margin-bottom: 20px;
+}
+
+h1 a:hover {
+  border: none;
+}
+
+h2 {
+  font-size: 35px;
+  font-weight: bold;
+  text-align: center;
+  color: #222;
+  text-shadow: 1px 1px 1px #B5C6A8;
+  margin-bottom: 20px;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  margin: 25px 0 10px;
+}
+
+h4 {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  color: #000;
+  margin-top: 25px;
+}
+
+p {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.tagline {
+  font-size: 20px;
+  text-align: center;
+  margin-bottom: 80px;
+  color: #333;
+}
+
+/* Search Form */
+
+.search-form {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.search-form input[type="text"] {
+  font-size: 18px;
+  padding: 10px;
+  border: 1px solid #333;
+  width: 200px;
+  font-family: Helvetica, Arial, sans-serif;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.search-form input[type="submit"],
+.search-form button[type="submit"] {
+  font-size: 18px;
+  padding: 10px 20px;
+  background: #333;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: bold;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 5px;
+}
+
+.search-form input[type="submit"]:hover,
+.search-form button[type="submit"]:hover {
+  background: #000;
+}
+
+/* Messages */
+
+.bigmessage {
+  font-size: 17px;
+  font-style: italic;
+  background: #eee;
+  padding: 40px 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #333;
+}
+
+.smallmeta {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  margin: 5px 80px;
+  line-height: 18px;
+}
+
+.smallmeta a {
+  color: #888;
+  text-decoration: underline;
+}
+
+.smallmeta a:hover {
+  text-decoration: none;
+  border: none;
+}
+
+/* Listen In Sidebar */
+
+.listen-in {
+  position: absolute;
+  right: 15px;
+  top: 40px;
+  background: #eee;
+  padding: 20px;
+  font-size: 15px;
+  width: 180px;
+}
+
+.listen-in h3 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 10px;
+}
+
+.listen-in a {
+  font-size: 12px;
+  display: block;
+  margin-bottom: 5px;
+  color: #000;
+}
+
+/* Playlists Table */
+
+.playlists-table {
+  width: 100%;
+  margin-bottom: 40px;
+}
+
+.playlists-table tr {
+  font-size: 13px;
+}
+
+.playlists-table td {
+  padding-bottom: 20px;
+  line-height: 18px;
+}
+
+.playlists-table .playlist-name {
+  text-align: right;
+  white-space: nowrap;
+  padding-right: 25px;
+  font-weight: bold;
+}
+
+.playlists-table .playlist-desc {
+  color: #333;
+}
+
+.playlists-table a {
+  color: #000;
+  font-weight: bold;
+}
+
+.discrete {
+  color: #aaa !important;
+}
+
+/* Artists Grid */
+
+#artistsContainer {
+  width: 396px;
+  overflow: auto;
+  margin-top: 20px;
+}
+
+.lastfmartist {
+  width: 126px;
+  height: 126px;
+  border: 1px solid #333;
+  position: relative;
+  float: left;
+  margin: 0 3px 3px 0;
+  cursor: pointer;
+  overflow: hidden;
+  background: #BDBD1D;
+}
+
+.lastfmartist img {
+  width: 126px;
+  height: 126px;
+  display: block;
+  object-fit: cover;
+}
+
+.lastfmartist-name {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  background: rgba(51, 51, 51, 0.9);
+  color: #fff;
+  font-size: 11px;
+  padding: 5px;
+  text-align: left;
+  line-height: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lastfmartist-plays {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  right: 0;
+  background: rgba(51, 51, 51, 0.9);
+  color: #fff;
+  font-size: 9px;
+  padding: 3px 5px;
+  text-align: left;
+}
+
+/* Loading/Status */
+
+.loading-spinner {
+  text-align: center;
+  margin: 40px 0;
+  font-size: 48px;
+}
+
+.status-table {
+  width: 100%;
+  margin-top: 40px;
+  font-size: 13px;
+}
+
+.status-table td {
+  padding: 8px 0;
+  line-height: 18px;
+}
+
+.status-table .status-name {
+  text-align: right;
+  white-space: nowrap;
+  padding-right: 25px;
+  color: #666;
+}
+
+.status-table .status-value {
+  color: #333;
+}
+
+.status-processing {
+  color: #BDBD1D !important;
+  font-style: italic;
+}
+
+.status-complete {
+  color: #5a8a3a !important;
+}
+
+.status-failed {
+  color: #d32f2f !important;
+}
+
+/* Footer */
+
+footer {
+  color: #888;
+  font-size: 13px;
+  line-height: 20px;
+  margin: 100px 0 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  text-align: center;
+  clear: both;
+}
+
+footer a {
+  color: #888;
+  text-decoration: underline;
+}
+
+footer a:hover {
+  text-decoration: none;
+  border: none;
+}
