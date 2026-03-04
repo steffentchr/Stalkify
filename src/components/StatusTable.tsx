@@ -1,14 +1,7 @@
-import { JobStatus } from '@prisma/client'
-
-interface StatusStep {
-  name: string
-  status: 'waiting' | 'processing' | 'completed' | 'failed'
-}
-
 interface StatusTableProps {
   status: {
     jobId: string
-    status: JobStatus
+    status: string
     progress: number
     currentStep: string | null
     playlistsCreated: number

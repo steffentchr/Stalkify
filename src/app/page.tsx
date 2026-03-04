@@ -41,7 +41,7 @@ export default async function HomePage() {
         <div className="listen-in">
           <h3>Listen in</h3>
           {recentUsers.map((user) => (
-            <Link key={user.username} href={`/user/${user.username}`}>
+            <Link key={user.username} href={`/${user.username}`}>
               @{user.username}
             </Link>
           ))}
@@ -49,7 +49,7 @@ export default async function HomePage() {
       )}
 
       <footer>
-        <Link href="https://github.com/steffentchr/legacy-stalkify">About</Link> &middot;{' '}
+        <Link href="/about">About</Link> &middot;{' '}
         <Link href="https://last.fm">Last.fm</Link> &middot;{' '}
         <Link href="https://spotify.com">Spotify</Link>
       </footer>

@@ -1,14 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { fetchLastfmQueue } from '@/lib/queue/queues'
+import { cachedLastfmClient } from '@/lib/lastfm/cache'
 import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
   try {
-    const username = params.username
+    const { username } = await params
+
+    // Validate username format
+    if (!/^[a-zA-Z0-9_-]{2,15}$/.test(username)) {
+      return NextResponse.json(
+        { error: 'Invalid Last.fm username' },
+        { status: 400 }
+      )
+    }
+
+    // Verify user exists on Last.fm
+    const exists = await cachedLastfmClient.userExists(username)
+    if (!exists) {
+      return NextResponse.json(
+        { error: `Last.fm user "${username}" not found` },
+        { status: 404 }
+      )
+    }
 
     // Check if user already has an active processing job
     const existingJob = await prisma.processingJob.findFirst({

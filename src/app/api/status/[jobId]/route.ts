@@ -3,11 +3,12 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
+    const { jobId } = await params
     const job = await prisma.processingJob.findUnique({
-      where: { jobId: params.jobId },
+      where: { jobId },
     })
 
     if (!job) {

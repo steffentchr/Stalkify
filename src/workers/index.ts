@@ -1,3 +1,7 @@
+import { config } from 'dotenv'
+config({ path: '.env.local', override: true })
+config({ path: '.env' })
+
 import { Worker } from 'bullmq'
 import { queueConnection } from '@/lib/queue/connection'
 import { QueueName } from '@/lib/queue/types'

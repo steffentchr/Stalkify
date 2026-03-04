@@ -17,6 +17,9 @@ export interface LastfmTrack {
     uts: string
     '#text': string
   }
+  '@attr'?: {
+    nowplaying?: string
+  }
 }
 
 export interface LastfmImage {
@@ -39,6 +42,10 @@ export interface LastfmUser {
   image?: LastfmImage[]
   country?: string
   playcount?: number
+  registered?: {
+    unixtime: string
+    '#text': number
+  }
 }
 
 export type LastfmPeriod = 'overall' | '7day' | '1month' | '3month' | '6month' | '12month'

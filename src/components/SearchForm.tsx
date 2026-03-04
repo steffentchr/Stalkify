@@ -7,16 +7,23 @@ export default function SearchForm() {
   const router = useRouter()
   const [username, setUsername] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setError('')
 
-    if (!username.trim()) return
+    const trimmed = username.trim()
+    if (!trimmed) return
+
+    // Last.fm usernames: 2-15 chars, alphanumeric, hyphens, underscores
+    if (!/^[a-zA-Z0-9_-]{2,15}$/.test(trimmed)) {
+      setError('Invalid Last.fm username')
+      return
+    }
 
     setIsSubmitting(true)
-
-    // Navigate to processing page
-    router.push(`/processing/${encodeURIComponent(username.trim())}`)
+    router.push(`/${encodeURIComponent(trimmed)}`)
   }
 
   return (
@@ -33,6 +40,7 @@ export default function SearchForm() {
       <button type="submit" disabled={isSubmitting}>
         {isSubmitting ? 'Loading...' : 'Stalkify'}
       </button>
+      {error && <div className="form-error">{error}</div>}
     </form>
   )
 }

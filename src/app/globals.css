@@ -115,6 +115,12 @@ p {
   background: #000;
 }
 
+.form-error {
+  color: #d32f2f;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
 /* Messages */
 
 .bigmessage {
@@ -303,6 +309,33 @@ p {
 
 .status-failed {
   color: #d32f2f !important;
+}
+
+/* About Page */
+
+.about-content {
+  font-size: 14px;
+  line-height: 22px;
+  color: #444;
+}
+
+.about-content p {
+  margin-bottom: 16px;
+}
+
+.about-content h3 {
+  font-size: 16px;
+  margin: 28px 0 8px;
+}
+
+.about-content a {
+  color: #333;
+  text-decoration: underline;
+}
+
+.about-content a:hover {
+  text-decoration: none;
+  border: none;
 }
 
 /* Footer */

@@ -2,12 +2,26 @@ import { Job } from 'bullmq'
 import { FeedType } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { cachedLastfmClient } from '@/lib/lastfm/cache'
+import { aggregateTopTracks } from '@/lib/lastfm/aggregate'
 import { matchTracksQueue } from '@/lib/queue/queues'
 import {
   FetchLastfmJobData,
   FetchLastfmJobResult,
   MatchTracksJobData,
 } from '@/lib/queue/types'
+
+const FEED_TYPE_LABELS: Record<string, string> = {
+  RECENT: 'live',
+  ALL_TIME: 'all-time',
+  WEEKLY: 'weekly',
+  THREE_MONTH: '3-months',
+  SIX_MONTH: '6-months',
+  YEARLY: 'yearly',
+}
+
+function feedTypeLabel(feedType: FeedType): string {
+  return FEED_TYPE_LABELS[feedType] || feedType.toLowerCase()
+}
 
 /**
  * Fetch Last.fm data worker processor
@@ -94,7 +108,7 @@ export async function fetchLastfmProcessor(
         userId: user.id,
         artistName: artist.name,
         imageUrl: artist.image?.find(img => img.size === 'large')?.[  '#text'] || null,
-        playCount: artist.playcount,
+        playCount: parseInt(String(artist.playcount), 10) || 0,
         rank: index + 1,
         period: 'overall',
       })),
@@ -123,12 +137,11 @@ export async function fetchLastfmProcessor(
 
     for (const config of playlistConfigs) {
       // Create or get playlist record
-      let playlist = await prisma.playlist.findUnique({
+      let playlist = await prisma.playlist.findFirst({
         where: {
-          userId_feedType: {
-            userId: user.id,
-            feedType: config.feedType,
-          },
+          userId: user.id,
+          feedType: config.feedType,
+          year: null,
         },
       })
 
@@ -139,9 +152,9 @@ export async function fetchLastfmProcessor(
           data: {
             userId: user.id,
             feedType: config.feedType,
-            name: `Stalkify: ${username}'s ${config.feedType.toLowerCase().replace('_', ' ')}`,
-            spotifyId: '', // Will be set by sync worker
-            spotifyUri: '', // Will be set by sync worker
+            name: `@${username} / ${feedTypeLabel(config.feedType)}`,
+            spotifyId: `pending_${user.id}_${config.feedType}`, // Will be set by sync worker
+            spotifyUri: `pending_${user.id}_${config.feedType}`, // Will be set by sync worker
             updateInterval: config.updateInterval,
             nextUpdateAt: new Date(now.getTime() + config.updateInterval * 60 * 1000),
           },
@@ -180,9 +193,87 @@ export async function fetchLastfmProcessor(
       }
     }
 
+    // 6. Create per-year playlists on initial process
+    if (isInitialProcess) {
+      console.log(`[fetch-lastfm] Creating per-year playlists for ${username}`)
+
+      await prisma.processingJob.update({
+        where: { jobId: processingJobId },
+        data: { currentStep: 'Building year playlists' },
+      })
+
+      const creationYear = await cachedLastfmClient.getAccountCreationYear(username)
+      const currentYear = new Date().getFullYear()
+
+      for (let year = creationYear; year <= currentYear; year++) {
+        console.log(`[fetch-lastfm] Fetching scrobbles for ${username} in ${year}`)
+
+        const scrobbles = await cachedLastfmClient.getAllScrobblesForYear(username, year)
+        const topTracks = aggregateTopTracks(scrobbles, 100)
+
+        // Skip years with very few unique tracks
+        if (topTracks.length < 10) {
+          console.log(`[fetch-lastfm] Skipping ${year} (only ${topTracks.length} unique tracks)`)
+          continue
+        }
+
+        // Create or get playlist for this year
+        let yearPlaylist = await prisma.playlist.findFirst({
+          where: {
+            userId: user.id,
+            feedType: FeedType.YEAR,
+            year,
+          },
+        })
+
+        if (!yearPlaylist) {
+          const now = new Date()
+          yearPlaylist = await prisma.playlist.create({
+            data: {
+              userId: user.id,
+              feedType: FeedType.YEAR,
+              year,
+              name: `@${username} / ${year}`,
+              spotifyId: `pending_${user.id}_YEAR_${year}`,
+              spotifyUri: `pending_${user.id}_YEAR_${year}`,
+              updateInterval: 0, // No auto-update for historical years
+              nextUpdateAt: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000), // Far future
+            },
+          })
+        }
+
+        playlistIds.push(yearPlaylist.id)
+
+        // Delete existing tracks
+        await prisma.playlistTrack.deleteMany({
+          where: { playlistId: yearPlaylist.id },
+        })
+
+        const trackData = topTracks.map(t => ({
+          trackName: t.trackName,
+          artistName: t.artistName,
+          albumName: t.albumName,
+        }))
+
+        totalTracks += trackData.length
+
+        await matchTracksQueue.add(
+          `match-${yearPlaylist.id}`,
+          {
+            playlistId: yearPlaylist.id,
+            tracks: trackData,
+            processingJobId,
+          } as MatchTracksJobData,
+          { priority: 3 } // Lower priority than standard playlists
+        )
+
+        console.log(`[fetch-lastfm] Queued ${year} playlist with ${topTracks.length} tracks`)
+      }
+    }
+
     await job.updateProgress(90)
 
-    // 6. Update processing job
+    // 7. Update processing job
     await prisma.processingJob.update({
       where: { jobId: processingJobId },
       data: {

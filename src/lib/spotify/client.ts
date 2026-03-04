@@ -96,7 +96,7 @@ export class SpotifyClient {
     description: string,
     isPublic = true
   ): Promise<SpotifyPlaylist> {
-    return fetchSpotify<SpotifyPlaylist>(`/users/${userId}/playlists`, {
+    return fetchSpotify<SpotifyPlaylist>(`/me/playlists`, {
       method: 'POST',
       body: JSON.stringify({
         name,
@@ -145,7 +145,7 @@ export class SpotifyClient {
 
     // Replace with first chunk
     if (chunks.length > 0) {
-      await fetchSpotify(`/playlists/${playlistId}/tracks`, {
+      await fetchSpotify(`/playlists/${playlistId}/items`, {
         method: 'PUT',
         body: JSON.stringify({ uris: chunks[0] }),
       })
@@ -153,7 +153,7 @@ export class SpotifyClient {
 
     // Add remaining chunks
     for (let i = 1; i < chunks.length; i++) {
-      await fetchSpotify(`/playlists/${playlistId}/tracks`, {
+      await fetchSpotify(`/playlists/${playlistId}/items`, {
         method: 'POST',
         body: JSON.stringify({ uris: chunks[i] }),
       })
@@ -170,7 +170,7 @@ export class SpotifyClient {
     // Spotify allows max 100 tracks per request
     for (let i = 0; i < trackUris.length; i += 100) {
       const chunk = trackUris.slice(i, i + 100)
-      await fetchSpotify(`/playlists/${playlistId}/tracks`, {
+      await fetchSpotify(`/playlists/${playlistId}/items`, {
         method: 'POST',
         body: JSON.stringify({ uris: chunk }),
       })
@@ -181,7 +181,7 @@ export class SpotifyClient {
    * Remove all tracks from a playlist
    */
   async clearPlaylist(playlistId: string): Promise<void> {
-    await fetchSpotify(`/playlists/${playlistId}/tracks`, {
+    await fetchSpotify(`/playlists/${playlistId}/items`, {
       method: 'PUT',
       body: JSON.stringify({ uris: [] }),
     })

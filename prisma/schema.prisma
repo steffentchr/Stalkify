@@ -44,6 +44,7 @@ model Playlist {
   spotifyUri        String      @unique
   name              String
   feedType          FeedType
+  year              Int?        // Calendar year for YEAR feed type
 
   // Update tracking
   updateInterval    Int         @default(60) // minutes
@@ -57,7 +58,7 @@ model Playlist {
   // Relations
   tracks            PlaylistTrack[]
 
-  @@unique([userId, feedType])
+  @@unique([userId, feedType, year])
   @@index([nextUpdateAt])
   @@map("playlists")
 }
@@ -69,7 +70,8 @@ enum FeedType {
   WEEKLY              // This week
   THREE_MONTH         // 3 months
   SIX_MONTH           // 6 months
-  YEARLY              // This year
+  YEARLY              // This year (rolling 12-month)
+  YEAR                // Specific calendar year (uses year field)
 }
 
 // Tracks in playlists

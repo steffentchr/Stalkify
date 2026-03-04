@@ -1,9 +1,9 @@
 import { prisma } from '../prisma'
 import { SpotifyAuthTokens } from './types'
 
-const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
-const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
-const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI
+
+
+
 
 const SPOTIFY_ACCOUNTS_URL = 'https://accounts.spotify.com'
 const REQUIRED_SCOPES = [
@@ -16,7 +16,7 @@ const REQUIRED_SCOPES = [
  * Generate Spotify authorization URL for OAuth flow
  */
 export function getAuthorizationUrl(state?: string): string {
-  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_REDIRECT_URI) {
+  const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID; const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI; if (!SPOTIFY_CLIENT_ID || !SPOTIFY_REDIRECT_URI) {
     throw new Error('Spotify OAuth credentials not configured')
   }
 
@@ -35,7 +35,7 @@ export function getAuthorizationUrl(state?: string): string {
  * Exchange authorization code for access tokens
  */
 export async function exchangeCodeForTokens(code: string): Promise<SpotifyAuthTokens> {
-  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REDIRECT_URI) {
+  const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID; const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET; const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI; if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REDIRECT_URI) {
     throw new Error('Spotify OAuth credentials not configured')
   }
 
@@ -65,7 +65,7 @@ export async function exchangeCodeForTokens(code: string): Promise<SpotifyAuthTo
  * Refresh access token using refresh token
  */
 export async function refreshAccessToken(refreshToken: string): Promise<SpotifyAuthTokens> {
-  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
+  const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID; const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET; if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
     throw new Error('Spotify OAuth credentials not configured')
   }
 

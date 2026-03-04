@@ -49,8 +49,8 @@ export async function syncPlaylistProcessor(
     // 3. Create or update Spotify playlist
     let spotifyPlaylist
 
-    if (playlist.spotifyId) {
-      // Playlist exists, update it
+    if (playlist.spotifyId && !playlist.spotifyId.startsWith('pending_')) {
+      // Playlist exists on Spotify, update it
       console.log(`[sync-playlist] Updating existing Spotify playlist ${playlist.spotifyId}`)
 
       try {
@@ -65,15 +65,6 @@ export async function syncPlaylistProcessor(
     if (!spotifyPlaylist) {
       // Create new playlist
       console.log(`[sync-playlist] Creating new Spotify playlist`)
-
-      const feedTypeLabels: Record<string, string> = {
-        RECENT: 'recent',
-        ALL_TIME: 'all-time top tracks',
-        WEEKLY: 'top tracks this week',
-        THREE_MONTH: '3-month top tracks',
-        SIX_MONTH: '6-months top tracks',
-        YEARLY: 'top tracks this year',
-      }
 
       const description = `Auto-updating playlist from ${playlist.user.username}'s Last.fm data. Generated with Stalkify.`
 
@@ -105,10 +96,8 @@ export async function syncPlaylistProcessor(
 
     if (trackUris.length > 0) {
       await spotifyClient.replacePlaylistTracks(spotifyPlaylist.id, trackUris)
-    } else {
-      // Clear playlist if no tracks
-      await spotifyClient.clearPlaylist(spotifyPlaylist.id)
     }
+    // No need to clear a newly created playlist — it's already empty
 
     await job.updateProgress(80)
 
@@ -126,9 +115,6 @@ export async function syncPlaylistProcessor(
     // 6. Check if all playlists for this processing job are complete
     const processingJob = await prisma.processingJob.findUnique({
       where: { jobId: processingJobId },
-      include: {
-        _count: true,
-      },
     })
 
     if (processingJob) {
@@ -142,7 +128,7 @@ export async function syncPlaylistProcessor(
       })
 
       if (user) {
-        const allPlaylistsSynced = user.playlists.every(p => p.spotifyId !== '')
+        const allPlaylistsSynced = user.playlists.every(p => p.spotifyId && !p.spotifyId.startsWith('pending_'))
 
         if (allPlaylistsSynced) {
           // Mark processing job as complete

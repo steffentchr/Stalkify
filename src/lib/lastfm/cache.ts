@@ -10,6 +10,7 @@ const CACHE_DURATIONS = {
   TOP_TRACKS: 60 * 60, // 1 hour
   TOP_ARTISTS: 60 * 60, // 1 hour
   USER_INFO: 60 * 60 * 24, // 24 hours
+  YEAR_SCROBBLES: 60 * 60 * 24, // 24 hours (historical data is stable)
 }
 
 /**
@@ -112,6 +113,39 @@ export class CachedLastfmClient {
     }
 
     return artists
+  }
+
+  /**
+   * Get all scrobbles for a year with caching
+   */
+  async getAllScrobblesForYear(username: string, year: number): Promise<LastfmTrack[]> {
+    const cacheKey = getCacheKey('scrobbles', username, year.toString())
+
+    try {
+      const cached = await redis.get(cacheKey)
+      if (cached) {
+        return JSON.parse(cached)
+      }
+    } catch (error) {
+      console.error('Redis cache read error:', error)
+    }
+
+    const tracks = await lastfmClient.getAllScrobblesForYear(username, year)
+
+    try {
+      await redis.setex(cacheKey, CACHE_DURATIONS.YEAR_SCROBBLES, JSON.stringify(tracks))
+    } catch (error) {
+      console.error('Redis cache write error:', error)
+    }
+
+    return tracks
+  }
+
+  /**
+   * Get account creation year
+   */
+  async getAccountCreationYear(username: string): Promise<number> {
+    return lastfmClient.getAccountCreationYear(username)
   }
 
   /**

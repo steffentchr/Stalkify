@@ -3,14 +3,15 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
   try {
+    const { username } = await params
     const user = await prisma.lastfmUser.findUnique({
-      where: { username: params.username },
+      where: { username },
       include: {
         playlists: {
-          where: { spotifyId: { not: '' } },
+          where: { spotifyId: { not: { startsWith: 'pending_' } } },
           orderBy: { feedType: 'asc' },
         },
         artists: {
@@ -31,7 +32,7 @@ export async function GET(
     // Check if user is currently being processed
     const activeJob = await prisma.processingJob.findFirst({
       where: {
-        username: params.username,
+        username,
         status: { in: ['PENDING', 'PROCESSING'] },
       },
       orderBy: { createdAt: 'desc' },
@@ -47,13 +48,24 @@ export async function GET(
     return NextResponse.json({
       status: 'exists',
       username: user.username,
-      playlists: user.playlists.map((p) => ({
-        feedType: p.feedType,
-        name: p.name,
-        spotifyUri: p.spotifyUri,
-        trackCount: p.trackCount,
-        lastUpdatedAt: p.lastUpdatedAt,
-      })),
+      playlists: user.playlists
+        .filter(p => p.feedType !== 'YEAR')
+        .map((p) => ({
+          feedType: p.feedType,
+          name: p.name,
+          spotifyUri: p.spotifyUri,
+          trackCount: p.trackCount,
+          lastUpdatedAt: p.lastUpdatedAt,
+        })),
+      yearPlaylists: user.playlists
+        .filter(p => p.feedType === 'YEAR')
+        .sort((a, b) => (b.year || 0) - (a.year || 0))
+        .map((p) => ({
+          year: p.year,
+          name: p.name,
+          spotifyUri: p.spotifyUri,
+          trackCount: p.trackCount,
+        })),
       artists: user.artists.map((a) => ({
         artistName: a.artistName,
         imageUrl: a.imageUrl,
