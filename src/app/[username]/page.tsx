@@ -1,0 +1,207 @@
+'use client'
+
+import { use, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import StatusTable from '@/components/StatusTable'
+import PlaylistTable from '@/components/PlaylistTable'
+import ArtistGrid from '@/components/ArtistGrid'
+
+interface UserPageProps {
+  params: Promise<{ username: string }>
+}
+
+interface JobStatusResponse {
+  jobId: string
+  status: string
+  progress: number
+  currentStep: string | null
+  playlistsCreated: number
+  tracksMatched: number
+  errorMessage: string | null
+}
+
+interface UserData {
+  status: 'exists' | 'processing' | 'not_found'
+  jobId?: string
+  username?: string
+  playlists?: Array<{
+    feedType: string
+    name: string
+    spotifyUrl: string
+    trackCount: number
+    lastUpdatedAt: string
+  }>
+  yearPlaylists?: Array<{
+    year: number
+    name: string
+    spotifyUrl: string
+    trackCount: number
+  }>
+  artists?: Array<{
+    artistName: string
+    imageUrl: string | null
+    spotifyUrl: string | null
+    playCount: number
+    rank: number
+  }>
+}
+
+export default function UserPage({ params }: UserPageProps) {
+  const { username } = use(params)
+  const router = useRouter()
+  const [state, setState] = useState<'loading' | 'processing' | 'results' | 'error'>('loading')
+  const [userData, setUserData] = useState<UserData | null>(null)
+  const [jobStatus, setJobStatus] = useState<JobStatusResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+
+    async function init() {
+      try {
+        // Check if user already exists
+        const res = await fetch(`/api/user/${username}`)
+
+        if (res.ok) {
+          const data: UserData = await res.json()
+
+          if (data.status === 'exists' && data.playlists && data.playlists.length > 0) {
+            setUserData(data)
+            setState('results')
+            return
+          }
+
+          if (data.status === 'processing' && data.jobId) {
+            setState('processing')
+            startPolling(data.jobId)
+            return
+          }
+        }
+
+        // User doesn't exist or has no playlists — start processing
+        const processRes = await fetch(`/api/user/${username}/process`, {
+          method: 'POST',
+        })
+
+        if (!processRes.ok) {
+          const errData = await processRes.json()
+          setError(errData.error || 'Failed to start processing')
+          setState('error')
+          return
+        }
+
+        const processData = await processRes.json()
+        setState('processing')
+        startPolling(processData.jobId)
+      } catch (err) {
+        setError('Failed to connect to server')
+        setState('error')
+        console.error(err)
+      }
+    }
+
+    function startPolling(jobId: string) {
+      interval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/status/${jobId}`)
+          if (!statusRes.ok) return
+
+          const statusData: JobStatusResponse = await statusRes.json()
+          setJobStatus(statusData)
+
+          if (statusData.status === 'COMPLETED') {
+            clearInterval(interval)
+            // Fetch the full user data
+            const userRes = await fetch(`/api/user/${username}`)
+            if (userRes.ok) {
+              const data: UserData = await userRes.json()
+              setUserData(data)
+              setState('results')
+            }
+          }
+
+          if (statusData.status === 'FAILED') {
+            clearInterval(interval)
+            setError(statusData.errorMessage || 'Processing failed')
+            setState('error')
+          }
+        } catch {
+          // Ignore polling errors
+        }
+      }, 2000)
+    }
+
+    init()
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [username])
+
+  return (
+    <div id="frame">
+      <h1>
+        <Link href="/">Stalkify</Link>
+      </h1>
+
+      <div className="tagline">Last.fm + Spotify bundled into goodness</div>
+
+      <h2>{username}</h2>
+
+      {state === 'loading' && <LoadingSpinner />}
+
+      {state === 'error' && (
+        <>
+          <div className="bigmessage" style={{ background: '#fee', color: '#d32f2f' }}>
+            <strong>Error:</strong> {error}
+          </div>
+          <div className="smallmeta">
+            <Link href="/">Try another username</Link>
+          </div>
+        </>
+      )}
+
+      {state === 'processing' && (
+        <>
+          <div className="bigmessage">
+            Please hang on while we stalkify <strong>{username}</strong>
+          </div>
+
+          <LoadingSpinner />
+
+          <div className="smallmeta">
+            This might take a few long minutes...
+            <br />
+            Fetching Last.fm data and creating Spotify playlists
+          </div>
+
+          <StatusTable status={jobStatus} />
+        </>
+      )}
+
+      {state === 'results' && userData && (
+        <>
+          <PlaylistTable playlists={userData.playlists || []} yearPlaylists={userData.yearPlaylists} />
+
+          {userData.artists && userData.artists.length > 0 && (
+            <>
+              <h3>Top Artists</h3>
+              <ArtistGrid artists={userData.artists} />
+              <div className="smallmeta" style={{ marginTop: 40 }}>
+                Click any artist to search on Spotify
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      <footer>
+        <Link href="/about">About</Link> &middot;{' '}
+        <Link href="https://last.fm">Last.fm</Link> &middot;{' '}
+        <Link href="https://spotify.com">Spotify</Link>
+      </footer>
+    </div>
+  )
+}
