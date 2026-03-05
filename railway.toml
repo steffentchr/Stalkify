@@ -1,9 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm run build && npx prisma db push"
+buildCommand = "npm run build"
 
 [deploy]
-startCommand = "npm run start"
+startCommand = "npx prisma db push && npm run start"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"

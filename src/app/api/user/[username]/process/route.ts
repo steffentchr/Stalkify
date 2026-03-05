@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { fetchLastfmQueue } from '@/lib/queue/queues'
+import { getFetchLastfmQueue } from '@/lib/queue/queues'
 import { cachedLastfmClient } from '@/lib/lastfm/cache'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -57,7 +57,7 @@ export async function POST(
     })
 
     // Queue the fetch-lastfm job
-    await fetchLastfmQueue.add(
+    await getFetchLastfmQueue().add(
       'fetch',
       {
         username,

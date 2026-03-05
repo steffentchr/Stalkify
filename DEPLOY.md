@@ -59,7 +59,7 @@ To link the database variables: click the variable value field, select **Referen
 - Click **+ New** → **GitHub Repo** → select the **same** `stalkify` repo again
 - Go to **Settings** and override:
   - **Build Command**: `npm install && npx prisma generate`
-  - **Start Command**: `npm run worker`
+  - **Start Command**: `npx prisma db push && npm run worker`
 - Add the **same environment variables** as the web service (link the same PostgreSQL and Redis references)
 
 ### 6. Custom domain

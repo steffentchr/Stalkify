@@ -1,7 +1,7 @@
 import { Job } from 'bullmq'
 import { prisma } from '@/lib/prisma'
 import { matchTrackToSpotify } from '@/lib/spotify/search'
-import { syncPlaylistQueue } from '@/lib/queue/queues'
+import { getSyncPlaylistQueue } from '@/lib/queue/queues'
 import {
   MatchTracksJobData,
   MatchTracksJobResult,
@@ -106,7 +106,7 @@ export async function matchTracksProcessor(
     })
 
     // Queue sync job to create/update Spotify playlist
-    await syncPlaylistQueue.add(
+    await getSyncPlaylistQueue().add(
       `sync-${playlistId}`,
       {
         playlistId,

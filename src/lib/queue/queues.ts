@@ -8,103 +8,80 @@ import {
   AutoUpdateJobData,
 } from './types'
 
-/**
- * Default job options
- */
 const defaultJobOptions = {
   attempts: 3,
   backoff: {
     type: 'exponential' as const,
     delay: 2000,
   },
-  removeOnComplete: {
-    count: 100,
-  },
-  removeOnFail: {
-    count: 500,
-  },
+  removeOnComplete: { count: 100 },
+  removeOnFail: { count: 500 },
 }
 
 /**
- * Fetch Last.fm data queue
- * Entry point for processing a new user
+ * Lazy queue instances — created on first access to avoid Redis connections at
+ * import/build time.
  */
-export const fetchLastfmQueue = new Queue<FetchLastfmJobData>(
-  QueueName.FETCH_LASTFM,
-  {
-    connection: queueConnection,
-    defaultJobOptions,
-  }
-)
+let _fetchLastfmQueue: Queue<FetchLastfmJobData> | null = null
+let _matchTracksQueue: Queue<MatchTracksJobData> | null = null
+let _syncPlaylistQueue: Queue<SyncPlaylistJobData> | null = null
+let _autoUpdateQueue: Queue<AutoUpdateJobData> | null = null
 
-/**
- * Match tracks to Spotify queue
- * Runs in parallel for each playlist/feed type
- */
-export const matchTracksQueue = new Queue<MatchTracksJobData>(
-  QueueName.MATCH_TRACKS,
-  {
-    connection: queueConnection,
-    defaultJobOptions: {
-      ...defaultJobOptions,
-      attempts: 2, // Fewer retries for track matching
-    },
+export function getFetchLastfmQueue(): Queue<FetchLastfmJobData> {
+  if (!_fetchLastfmQueue) {
+    _fetchLastfmQueue = new Queue<FetchLastfmJobData>(QueueName.FETCH_LASTFM, {
+      connection: queueConnection,
+      defaultJobOptions,
+    })
   }
-)
+  return _fetchLastfmQueue
+}
 
-/**
- * Sync playlist to Spotify queue
- * Creates or updates Spotify playlists
- */
-export const syncPlaylistQueue = new Queue<SyncPlaylistJobData>(
-  QueueName.SYNC_PLAYLIST,
-  {
-    connection: queueConnection,
-    defaultJobOptions,
+export function getMatchTracksQueue(): Queue<MatchTracksJobData> {
+  if (!_matchTracksQueue) {
+    _matchTracksQueue = new Queue<MatchTracksJobData>(QueueName.MATCH_TRACKS, {
+      connection: queueConnection,
+      defaultJobOptions: { ...defaultJobOptions, attempts: 2 },
+    })
   }
-)
+  return _matchTracksQueue
+}
 
-/**
- * Auto-update queue
- * Triggered by cron for stale playlists
- */
-export const autoUpdateQueue = new Queue<AutoUpdateJobData>(
-  QueueName.AUTO_UPDATE,
-  {
-    connection: queueConnection,
-    defaultJobOptions: {
-      ...defaultJobOptions,
-      attempts: 2,
-    },
+export function getSyncPlaylistQueue(): Queue<SyncPlaylistJobData> {
+  if (!_syncPlaylistQueue) {
+    _syncPlaylistQueue = new Queue<SyncPlaylistJobData>(QueueName.SYNC_PLAYLIST, {
+      connection: queueConnection,
+      defaultJobOptions,
+    })
   }
-)
+  return _syncPlaylistQueue
+}
 
-/**
- * Helper to get queue by name
- */
+export function getAutoUpdateQueue(): Queue<AutoUpdateJobData> {
+  if (!_autoUpdateQueue) {
+    _autoUpdateQueue = new Queue<AutoUpdateJobData>(QueueName.AUTO_UPDATE, {
+      connection: queueConnection,
+      defaultJobOptions: { ...defaultJobOptions, attempts: 2 },
+    })
+  }
+  return _autoUpdateQueue
+}
+
 export function getQueue(name: QueueName): Queue {
   switch (name) {
-    case QueueName.FETCH_LASTFM:
-      return fetchLastfmQueue
-    case QueueName.MATCH_TRACKS:
-      return matchTracksQueue
-    case QueueName.SYNC_PLAYLIST:
-      return syncPlaylistQueue
-    case QueueName.AUTO_UPDATE:
-      return autoUpdateQueue
-    default:
-      throw new Error(`Unknown queue: ${name}`)
+    case QueueName.FETCH_LASTFM: return getFetchLastfmQueue()
+    case QueueName.MATCH_TRACKS: return getMatchTracksQueue()
+    case QueueName.SYNC_PLAYLIST: return getSyncPlaylistQueue()
+    case QueueName.AUTO_UPDATE: return getAutoUpdateQueue()
+    default: throw new Error(`Unknown queue: ${name}`)
   }
 }
 
-/**
- * Gracefully close all queues
- */
 export async function closeAllQueues(): Promise<void> {
   await Promise.all([
-    fetchLastfmQueue.close(),
-    matchTracksQueue.close(),
-    syncPlaylistQueue.close(),
-    autoUpdateQueue.close(),
+    _fetchLastfmQueue?.close(),
+    _matchTracksQueue?.close(),
+    _syncPlaylistQueue?.close(),
+    _autoUpdateQueue?.close(),
   ])
 }

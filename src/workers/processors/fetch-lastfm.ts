@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { cachedLastfmClient } from '@/lib/lastfm/cache'
 import { aggregateTopTracks } from '@/lib/lastfm/aggregate'
 import { spotifyClient } from '@/lib/spotify/client'
-import { matchTracksQueue } from '@/lib/queue/queues'
+import { getMatchTracksQueue } from '@/lib/queue/queues'
 import {
   FetchLastfmJobData,
   FetchLastfmJobResult,
@@ -208,7 +208,7 @@ export async function fetchLastfmProcessor(
 
       // Queue match-tracks job
       if (trackData.length > 0) {
-        await matchTracksQueue.add(
+        await getMatchTracksQueue().add(
           `match-${playlist.id}`,
           {
             playlistId: playlist.id,
@@ -286,7 +286,7 @@ export async function fetchLastfmProcessor(
 
         totalTracks += trackData.length
 
-        await matchTracksQueue.add(
+        await getMatchTracksQueue().add(
           `match-${yearPlaylist.id}`,
           {
             playlistId: yearPlaylist.id,

@@ -2,7 +2,7 @@ import { Job } from 'bullmq'
 import { FeedType } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { cachedLastfmClient } from '@/lib/lastfm/cache'
-import { matchTracksQueue, syncPlaylistQueue } from '@/lib/queue/queues'
+import { getMatchTracksQueue, getSyncPlaylistQueue } from '@/lib/queue/queues'
 import {
   AutoUpdateJobData,
   AutoUpdateJobResult,
@@ -123,7 +123,7 @@ export async function autoUpdateProcessor(
     await job.updateProgress(70)
 
     // 4. Queue match and sync jobs
-    await matchTracksQueue.add(
+    await getMatchTracksQueue().add(
       `match-${playlistId}`,
       {
         playlistId,
