@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "worker": "tsx src/workers/index.ts",
+    "worker": "prisma generate && tsx src/workers/index.ts",
     "worker:dev": "tsx watch src/workers/index.ts",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
