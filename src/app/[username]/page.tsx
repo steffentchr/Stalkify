@@ -1,7 +1,6 @@
 'use client'
 
 import { use, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import StatusTable from '@/components/StatusTable'
@@ -50,7 +49,6 @@ interface UserData {
 
 export default function UserPage({ params }: UserPageProps) {
   const { username } = use(params)
-  const router = useRouter()
   const [state, setState] = useState<'loading' | 'processing' | 'results' | 'error'>('loading')
   const [userData, setUserData] = useState<UserData | null>(null)
   const [jobStatus, setJobStatus] = useState<JobStatusResponse | null>(null)
@@ -70,10 +68,6 @@ export default function UserPage({ params }: UserPageProps) {
           if (data.playlists && data.playlists.length > 0) {
             setUserData(data)
             setState('results')
-            // Still poll in background if a job is running (e.g. updating year playlists)
-            if (data.status === 'processing' && data.jobId) {
-              startPolling(data.jobId)
-            }
             return
           }
 
