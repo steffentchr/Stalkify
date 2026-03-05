@@ -1,11 +1,9 @@
 import { ConnectionOptions } from 'bullmq'
+import type { RedisOptions } from 'ioredis'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
 
-/**
- * Parse Redis URL into BullMQ connection options
- */
-function parseRedisUrl(url: string): ConnectionOptions {
+function parseRedisUrl(url: string): RedisOptions {
   const urlObj = new URL(url)
   return {
     host: urlObj.hostname,
@@ -15,12 +13,8 @@ function parseRedisUrl(url: string): ConnectionOptions {
   }
 }
 
-/**
- * BullMQ connection configuration
- * Shared across queues and workers
- */
 export const queueConnection: ConnectionOptions = {
   ...parseRedisUrl(REDIS_URL),
   maxRetriesPerRequest: null, // Required for BullMQ
   enableReadyCheck: false,
-}
+} as RedisOptions
