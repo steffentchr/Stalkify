@@ -1,6 +1,7 @@
 import { getValidAccessToken } from './auth'
 import {
   SpotifyApiError,
+  SpotifyArtist,
   SpotifyTrack,
   SpotifyPlaylist,
   SpotifySearchResponse,
@@ -85,6 +86,21 @@ export class SpotifyClient {
     const response = await fetchSpotify<SpotifySearchResponse>(`/search?${params}`)
 
     return response.tracks.items[0] || null
+  }
+
+  /**
+   * Search for an artist
+   */
+  async searchArtist(artistName: string): Promise<SpotifyArtist | null> {
+    const params = new URLSearchParams({
+      q: `artist:${artistName}`,
+      type: 'artist',
+      limit: '1',
+    })
+
+    const response = await fetchSpotify<SpotifySearchResponse>(`/search?${params}`)
+
+    return response.artists?.items[0] || null
   }
 
   /**

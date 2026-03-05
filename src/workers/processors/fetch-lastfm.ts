@@ -3,6 +3,7 @@ import { FeedType } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { cachedLastfmClient } from '@/lib/lastfm/cache'
 import { aggregateTopTracks } from '@/lib/lastfm/aggregate'
+import { spotifyClient } from '@/lib/spotify/client'
 import { matchTracksQueue } from '@/lib/queue/queues'
 import {
   FetchLastfmJobData,
@@ -96,19 +97,47 @@ export async function fetchLastfmProcessor(
 
     await job.updateProgress(50)
 
-    // 4. Store top artists
-    console.log(`[fetch-lastfm] Storing ${topArtists.length} artists`)
+    // 4. Store top artists with Spotify images
+    console.log(`[fetch-lastfm] Storing ${topArtists.length} artists, fetching Spotify data`)
+
+    // Search Spotify for artist images and URLs (batch of 5 at a time)
+    const artistData: Array<{ name: string; imageUrl: string | null; spotifyUrl: string | null; playCount: number }> = []
+    for (let i = 0; i < topArtists.length; i += 5) {
+      const batch = topArtists.slice(i, i + 5)
+      const results = await Promise.all(
+        batch.map(async (artist) => {
+          try {
+            const spotifyArtist = await spotifyClient.searchArtist(artist.name)
+            return {
+              name: artist.name,
+              imageUrl: spotifyArtist?.images?.[1]?.url || spotifyArtist?.images?.[0]?.url || null,
+              spotifyUrl: spotifyArtist?.external_urls?.spotify || null,
+              playCount: parseInt(String(artist.playcount), 10) || 0,
+            }
+          } catch {
+            return {
+              name: artist.name,
+              imageUrl: null,
+              spotifyUrl: null,
+              playCount: parseInt(String(artist.playcount), 10) || 0,
+            }
+          }
+        })
+      )
+      artistData.push(...results)
+    }
 
     await prisma.userArtist.deleteMany({
       where: { userId: user.id },
     })
 
     await prisma.userArtist.createMany({
-      data: topArtists.map((artist, index) => ({
+      data: artistData.map((artist, index) => ({
         userId: user.id,
         artistName: artist.name,
-        imageUrl: artist.image?.find(img => img.size === 'large')?.[  '#text'] || null,
-        playCount: parseInt(String(artist.playcount), 10) || 0,
+        imageUrl: artist.imageUrl,
+        spotifyUrl: artist.spotifyUrl,
+        playCount: artist.playCount,
         rank: index + 1,
         period: 'overall',
       })),

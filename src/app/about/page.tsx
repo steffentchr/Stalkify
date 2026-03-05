@@ -42,6 +42,50 @@ export default function AboutPage() {
           reflect your latest listening habits.
         </p>
 
+        <h3>Year in review</h3>
+        <p>
+          On top of the six rolling playlists, Stalkify also creates a
+          year-in-review playlist for every calendar year in your scrobble
+          history. Each one contains up to 100 of your most-played tracks from
+          that year &mdash; a time capsule of what you were listening to.
+        </p>
+
+        <h3>Setting up Last.fm scrobbling</h3>
+        <p>
+          To get the most out of Stalkify, you need to scrobble your Spotify
+          listening to Last.fm. Here&apos;s how:
+        </p>
+        <ol>
+          <li>
+            Create a free account at{" "}
+            <a href="https://www.last.fm/join" target="_blank" rel="noopener noreferrer">
+              last.fm/join
+            </a>
+          </li>
+          <li>
+            Go to{" "}
+            <a
+              href="https://www.last.fm/settings/applications"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              last.fm/settings/applications
+            </a>{" "}
+            and connect your Spotify account under &ldquo;Spotify
+            Scrobbling&rdquo;
+          </li>
+          <li>
+            That&apos;s it &mdash; everything you play on Spotify will now be
+            tracked on your Last.fm profile, and Stalkify can use that data to
+            build your playlists
+          </li>
+        </ol>
+        <p>
+          Scrobbling works in the background. Once connected, every track you
+          play on Spotify is automatically logged to your Last.fm account. The
+          longer you scrobble, the richer your playlists become.
+        </p>
+
         <h3>History</h3>
         <p>
           Stalkify was originally built by{" "}

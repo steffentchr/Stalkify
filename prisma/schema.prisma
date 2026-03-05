@@ -144,6 +144,7 @@ model UserArtist {
   // Artist details
   artistName        String
   imageUrl          String?
+  spotifyUrl        String?
   playCount         Int
 
   // Ranking

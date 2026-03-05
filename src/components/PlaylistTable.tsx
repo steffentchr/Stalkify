@@ -1,7 +1,7 @@
 interface Playlist {
   feedType: string
   name: string
-  spotifyUri: string
+  spotifyUrl: string
   trackCount: number
   lastUpdatedAt?: string
 }
@@ -9,7 +9,7 @@ interface Playlist {
 interface YearPlaylist {
   year: number
   name: string
-  spotifyUri: string
+  spotifyUrl: string
   trackCount: number
 }
 
@@ -36,7 +36,7 @@ export default function PlaylistTable({ playlists, yearPlaylists }: PlaylistTabl
             <tr key={playlist.feedType}>
               <td className="playlist-name">{feedTypeLabels[playlist.feedType] || playlist.feedType}</td>
               <td className="playlist-desc">
-                <a href={playlist.spotifyUri} target="_blank" rel="noopener noreferrer">
+                <a href={playlist.spotifyUrl} target="_blank" rel="noopener noreferrer">
                   {playlist.name}
                 </a>
               </td>
@@ -47,17 +47,16 @@ export default function PlaylistTable({ playlists, yearPlaylists }: PlaylistTabl
 
       {yearPlaylists && yearPlaylists.length > 0 && (
         <>
-          <h4>Year in review</h4>
+          <h3 style={{ marginBottom: 16 }}>Year in review</h3>
           <table className="playlists-table">
             <tbody>
               {yearPlaylists.map((playlist) => (
                 <tr key={playlist.year}>
                   <td className="playlist-name">{playlist.year}</td>
                   <td className="playlist-desc">
-                    <a href={playlist.spotifyUri} target="_blank" rel="noopener noreferrer">
+                    <a href={playlist.spotifyUrl} target="_blank" rel="noopener noreferrer">
                       {playlist.name}
                     </a>
-                    <span className="discrete"> &middot; {playlist.trackCount} tracks</span>
                   </td>
                 </tr>
               ))}

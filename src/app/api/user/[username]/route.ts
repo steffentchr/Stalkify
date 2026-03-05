@@ -45,6 +45,8 @@ export async function GET(
       })
     }
 
+    const spotifyUrl = (id: string) => `https://open.spotify.com/playlist/${id}`
+
     return NextResponse.json({
       status: 'exists',
       username: user.username,
@@ -53,7 +55,7 @@ export async function GET(
         .map((p) => ({
           feedType: p.feedType,
           name: p.name,
-          spotifyUri: p.spotifyUri,
+          spotifyUrl: spotifyUrl(p.spotifyId),
           trackCount: p.trackCount,
           lastUpdatedAt: p.lastUpdatedAt,
         })),
@@ -63,12 +65,13 @@ export async function GET(
         .map((p) => ({
           year: p.year,
           name: p.name,
-          spotifyUri: p.spotifyUri,
+          spotifyUrl: spotifyUrl(p.spotifyId),
           trackCount: p.trackCount,
         })),
       artists: user.artists.map((a) => ({
         artistName: a.artistName,
         imageUrl: a.imageUrl,
+        spotifyUrl: a.spotifyUrl,
         playCount: a.playCount,
         rank: a.rank,
       })),

@@ -231,6 +231,9 @@ p {
   cursor: pointer;
   overflow: hidden;
   background: #BDBD1D;
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 
 .lastfmartist img {

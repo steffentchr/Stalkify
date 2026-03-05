@@ -1,6 +1,7 @@
 interface Artist {
   artistName: string
   imageUrl: string | null
+  spotifyUrl: string | null
   playCount: number
   rank: number
 }
@@ -13,7 +14,13 @@ export default function ArtistGrid({ artists }: ArtistGridProps) {
   return (
     <div id="artistsContainer">
       {artists.map((artist) => (
-        <div key={artist.rank} className="lastfmartist">
+        <a
+          key={artist.rank}
+          className="lastfmartist"
+          href={artist.spotifyUrl || `https://open.spotify.com/search/${encodeURIComponent(artist.artistName)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {artist.imageUrl ? (
             <img src={artist.imageUrl} alt={artist.artistName} />
           ) : (
@@ -23,7 +30,7 @@ export default function ArtistGrid({ artists }: ArtistGridProps) {
           <div className="lastfmartist-plays">
             {artist.playCount.toLocaleString()} plays
           </div>
-        </div>
+        </a>
       ))}
     </div>
   )

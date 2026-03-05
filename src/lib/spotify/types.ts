@@ -17,6 +17,7 @@ export interface SpotifyArtist {
   id: string
   uri: string
   name: string
+  images?: SpotifyImage[]
   external_urls: {
     spotify: string
   }
@@ -56,6 +57,12 @@ export interface SpotifyPlaylist {
 export interface SpotifySearchResponse {
   tracks: {
     items: SpotifyTrack[]
+    total: number
+    limit: number
+    offset: number
+  }
+  artists?: {
+    items: SpotifyArtist[]
     total: number
     limit: number
     offset: number
