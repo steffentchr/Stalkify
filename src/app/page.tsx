@@ -4,6 +4,10 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
+export const metadata = {
+  title: 'Last.fm + Spotify bundled into goodness',
+}
+
 async function getRecentUsers() {
   const users = await prisma.lastfmUser.findMany({
     orderBy: { lastProcessedAt: 'desc' },

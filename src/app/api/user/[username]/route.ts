@@ -38,17 +38,11 @@ export async function GET(
       orderBy: { createdAt: 'desc' },
     })
 
-    if (activeJob) {
-      return NextResponse.json({
-        status: 'processing',
-        jobId: activeJob.jobId,
-      })
-    }
-
     const spotifyUrl = (id: string) => `https://open.spotify.com/playlist/${id}`
 
     return NextResponse.json({
-      status: 'exists',
+      status: activeJob ? 'processing' : 'exists',
+      jobId: activeJob?.jobId,
       username: user.username,
       playlists: user.playlists
         .filter(p => p.feedType !== 'YEAR')

@@ -67,9 +67,13 @@ export default function UserPage({ params }: UserPageProps) {
         if (res.ok) {
           const data: UserData = await res.json()
 
-          if (data.status === 'exists' && data.playlists && data.playlists.length > 0) {
+          if (data.playlists && data.playlists.length > 0) {
             setUserData(data)
             setState('results')
+            // Still poll in background if a job is running (e.g. updating year playlists)
+            if (data.status === 'processing' && data.jobId) {
+              startPolling(data.jobId)
+            }
             return
           }
 
