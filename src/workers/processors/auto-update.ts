@@ -46,7 +46,7 @@ export async function autoUpdateProcessor(
     // 2. Fetch fresh data from Last.fm based on feed type
     console.log(`[auto-update] Fetching fresh ${playlist.feedType} data for ${username}`)
 
-    let tracks
+    let tracks: Array<{ name: string; artist: { name: string }; album?: { name: string } }> = []
     let shouldUpdate = false
 
     switch (playlist.feedType) {
@@ -90,7 +90,7 @@ export async function autoUpdateProcessor(
             name: t.trackName,
             artist: { name: t.artistName },
             album: t.albumName ? { name: t.albumName } : undefined,
-          })) as any
+          }))
           shouldUpdate = true
         }
         break
