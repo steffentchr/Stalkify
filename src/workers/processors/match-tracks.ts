@@ -30,7 +30,7 @@ export async function matchTracksProcessor(
     const playlist = await prisma.playlist.findUnique({ where: { id: playlistId } })
     if (!playlist) {
       console.warn(`[match-tracks] Playlist ${playlistId} not found, skipping job`)
-      return { matchedCount: 0, unmatchedCount: 0, playlistId }
+      return { matchedCount: 0, unmatchedCount: 0, totalTracks: 0, playlistId }
     }
 
     // Clear any existing tracks (handles job retries cleanly)

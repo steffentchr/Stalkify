@@ -57,20 +57,25 @@ export default function UserPage({ params }: UserPageProps) {
   useEffect(() => {
     let interval: NodeJS.Timeout
 
+    async function fetchUserData(): Promise<UserData | null> {
+      const res = await fetch(`/api/user/${username}`)
+      return res.ok ? res.json() : null
+    }
+
+    function showResults(data: UserData) {
+      setUserData(data)
+      setState('results')
+    }
+
     async function init() {
       try {
-        // Check if user already exists
-        const res = await fetch(`/api/user/${username}`)
+        const data = await fetchUserData()
 
-        if (res.ok) {
-          const data: UserData = await res.json()
-
+        if (data) {
           if (data.playlists && data.playlists.length > 0) {
-            setUserData(data)
-            setState('results')
+            showResults(data)
             return
           }
-
           if (data.status === 'processing' && data.jobId) {
             setState('processing')
             startPolling(data.jobId)
@@ -79,9 +84,7 @@ export default function UserPage({ params }: UserPageProps) {
         }
 
         // User doesn't exist or has no playlists — start processing
-        const processRes = await fetch(`/api/user/${username}/process`, {
-          method: 'POST',
-        })
+        const processRes = await fetch(`/api/user/${username}/process`, { method: 'POST' })
 
         if (!processRes.ok) {
           const errData = await processRes.json()
@@ -111,13 +114,9 @@ export default function UserPage({ params }: UserPageProps) {
 
           if (statusData.status === 'COMPLETED') {
             clearInterval(interval)
-            // Fetch the full user data
-            const userRes = await fetch(`/api/user/${username}`)
-            if (userRes.ok) {
-              const data: UserData = await userRes.json()
-              setUserData(data)
-              setState('results')
-            }
+            const data = await fetchUserData()
+            if (data) showResults(data)
+            return
           }
 
           if (statusData.status === 'FAILED') {

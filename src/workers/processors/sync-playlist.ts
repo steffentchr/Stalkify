@@ -130,10 +130,12 @@ export async function syncPlaylistProcessor(
       })
 
       if (user) {
-        const allPlaylistsSynced = user.playlists.every(p => p.spotifyId && !p.spotifyId.startsWith('pending_'))
+        const standardPlaylists = user.playlists.filter(p => p.feedType !== 'YEAR')
+        const allStandardSynced = standardPlaylists.length > 0 &&
+          standardPlaylists.every(p => p.spotifyId && !p.spotifyId.startsWith('pending_'))
 
-        if (allPlaylistsSynced && processingJob.status !== 'FAILED') {
-          // Mark processing job as complete (don't overwrite a FAILED status)
+        if (allStandardSynced && processingJob.status !== 'FAILED' && processingJob.status !== 'COMPLETED') {
+          // Mark complete as soon as standard playlists are synced; year playlists continue in background
           await prisma.processingJob.update({
             where: { jobId: processingJobId },
             data: {
@@ -144,7 +146,7 @@ export async function syncPlaylistProcessor(
             },
           })
 
-          console.log(`[sync-playlist] ✓ All playlists synced — processing job complete`)
+          console.log(`[sync-playlist] ✓ Standard playlists synced — processing job complete (year playlists continue in background)`)
         }
       }
     }
