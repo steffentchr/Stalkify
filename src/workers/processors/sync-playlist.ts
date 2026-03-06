@@ -16,7 +16,7 @@ export async function syncPlaylistProcessor(
 ): Promise<SyncPlaylistJobResult> {
   const { playlistId, processingJobId } = job.data
 
-  console.log(`[sync-playlist] Syncing playlist ${playlistId} to Spotify`)
+  console.log(`[sync-playlist] ▶ Syncing playlist ${playlistId}`)
 
   try {
     await job.updateProgress(10)
@@ -39,6 +39,8 @@ export async function syncPlaylistProcessor(
       throw new Error(`Playlist ${playlistId} not found`)
     }
 
+    console.log(`[sync-playlist] "${playlist.name}" — ${playlist.tracks.length} matched tracks`)
+
     await job.updateProgress(20)
 
     // 2. Get Spotify user ID
@@ -51,20 +53,20 @@ export async function syncPlaylistProcessor(
 
     if (playlist.spotifyId && !playlist.spotifyId.startsWith('pending_')) {
       // Playlist exists on Spotify, update it
-      console.log(`[sync-playlist] Updating existing Spotify playlist ${playlist.spotifyId}`)
+      console.log(`[sync-playlist] Updating existing Spotify playlist "${playlist.name}"`)
 
       try {
         spotifyPlaylist = await spotifyClient.getPlaylist(playlist.spotifyId)
       } catch (error) {
         // Playlist not found, create new one
-        console.log(`[sync-playlist] Existing playlist not found, creating new one`)
+        console.log(`[sync-playlist] Existing playlist not found on Spotify, will create new`)
         spotifyPlaylist = null
       }
     }
 
     if (!spotifyPlaylist) {
       // Create new playlist
-      console.log(`[sync-playlist] Creating new Spotify playlist`)
+      console.log(`[sync-playlist] Creating new Spotify playlist: "${playlist.name}"`)
 
       const description = `Auto-updating playlist from ${playlist.user.username}'s Last.fm data. Generated with Stalkify.`
 
@@ -92,7 +94,7 @@ export async function syncPlaylistProcessor(
       .map(t => t.spotifyUri)
       .filter((uri): uri is string => uri !== null)
 
-    console.log(`[sync-playlist] Syncing ${trackUris.length} tracks to Spotify`)
+    console.log(`[sync-playlist] Pushing ${trackUris.length} tracks to Spotify...`)
 
     if (trackUris.length > 0) {
       await spotifyClient.replacePlaylistTracks(spotifyPlaylist.id, trackUris)
@@ -130,8 +132,8 @@ export async function syncPlaylistProcessor(
       if (user) {
         const allPlaylistsSynced = user.playlists.every(p => p.spotifyId && !p.spotifyId.startsWith('pending_'))
 
-        if (allPlaylistsSynced) {
-          // Mark processing job as complete
+        if (allPlaylistsSynced && processingJob.status !== 'FAILED') {
+          // Mark processing job as complete (don't overwrite a FAILED status)
           await prisma.processingJob.update({
             where: { jobId: processingJobId },
             data: {
@@ -142,14 +144,14 @@ export async function syncPlaylistProcessor(
             },
           })
 
-          console.log(`[sync-playlist] All playlists synced! Processing job ${processingJobId} complete`)
+          console.log(`[sync-playlist] ✓ All playlists synced — processing job complete`)
         }
       }
     }
 
     await job.updateProgress(100)
 
-    console.log(`[sync-playlist] Successfully synced playlist to ${spotifyPlaylist.uri}`)
+    console.log(`[sync-playlist] ✓ "${playlist.name}" → ${spotifyPlaylist.external_urls?.spotify ?? spotifyPlaylist.uri} (${trackUris.length} tracks)`)
 
     return {
       playlistId,

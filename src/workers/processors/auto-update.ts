@@ -2,6 +2,7 @@ import { Job } from 'bullmq'
 import { FeedType } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { cachedLastfmClient } from '@/lib/lastfm/cache'
+import { aggregateTopTracks } from '@/lib/lastfm/aggregate'
 import { getMatchTracksQueue, getSyncPlaylistQueue } from '@/lib/queue/queues'
 import {
   AutoUpdateJobData,
@@ -79,6 +80,21 @@ export async function autoUpdateProcessor(
         tracks = await cachedLastfmClient.getTopTracks(username, '12month', 50)
         shouldUpdate = true
         break
+
+      case FeedType.YEAR: {
+        if (!playlist.year) break
+        const scrobbles = await cachedLastfmClient.getAllScrobblesForYear(username, playlist.year)
+        const topTracks = aggregateTopTracks(scrobbles, 100)
+        if (topTracks.length >= 10) {
+          tracks = topTracks.map(t => ({
+            name: t.trackName,
+            artist: { name: t.artistName },
+            album: t.albumName ? { name: t.albumName } : undefined,
+          })) as any
+          shouldUpdate = true
+        }
+        break
+      }
 
       default:
         throw new Error(`Unknown feed type: ${playlist.feedType}`)

@@ -17,7 +17,7 @@ export async function GET(
         artists: {
           where: { period: 'overall' },
           orderBy: { rank: 'asc' },
-          take: 48,
+          take: 30,
         },
       },
     })

@@ -10,25 +10,27 @@ import {
 
 const SPOTIFY_API_URL = 'https://api.spotify.com/v1'
 
-// Rate limiting: 10 requests per second
-const RATE_LIMIT_DELAY = 100 // milliseconds
+// Conservative rate limit: ~2 requests/second
+const RATE_LIMIT_DELAY = 500 // milliseconds
 
-let lastRequestTime = 0
+// Queue-based rate limiter: each caller atomically reserves a time slot
+let nextAllowedAt = 0
 
 async function rateLimit() {
-  const now = Date.now()
-  const timeSinceLastRequest = now - lastRequestTime
+  // Atomically reserve the next available slot (JS single-threaded — safe without locks)
+  const mySlot = Math.max(Date.now(), nextAllowedAt)
+  nextAllowedAt = mySlot + RATE_LIMIT_DELAY
 
-  if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
-    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest))
+  const delay = mySlot - Date.now()
+  if (delay > 0) {
+    await new Promise(resolve => setTimeout(resolve, delay))
   }
-
-  lastRequestTime = Date.now()
 }
 
 async function fetchSpotify<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retries = 3
 ): Promise<T> {
   await rateLimit()
 
@@ -43,6 +45,23 @@ async function fetchSpotify<T>(
       ...options.headers,
     },
   })
+
+  // Handle rate limiting: back off for Retry-After seconds then retry
+  if (response.status === 429 && retries > 0) {
+    const retryAfter = parseInt(response.headers.get('Retry-After') || '5', 10)
+    const waitMs = (retryAfter + 1) * 1000
+    console.warn(`[spotify] 429 rate limited, retrying after ${retryAfter}s (${retries} retries left)`)
+    await new Promise(resolve => setTimeout(resolve, waitMs))
+    return fetchSpotify<T>(endpoint, options, retries - 1)
+  }
+
+  // 403: Spotify sometimes rate-limits via 403 instead of 429 — back off and retry
+  if (response.status === 403 && retries > 0) {
+    const backoff = (4 - retries) * 3000 // 3s, 6s, 9s — escalating backoff
+    console.warn(`[spotify] 403 on ${endpoint}, backing off ${backoff / 1000}s and retrying (${retries} retries left)`)
+    await new Promise(resolve => setTimeout(resolve, backoff))
+    return fetchSpotify<T>(endpoint, options, retries - 1)
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))

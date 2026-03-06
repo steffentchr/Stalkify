@@ -19,9 +19,23 @@ export async function matchTracksProcessor(
 ): Promise<MatchTracksJobResult> {
   const { playlistId, tracks, processingJobId } = job.data
 
-  console.log(`[match-tracks] Matching ${tracks.length} tracks for playlist ${playlistId}`)
+  // Get playlist name for readable logs
+  const playlistMeta = await prisma.playlist.findUnique({ where: { id: playlistId }, select: { name: true } })
+  const playlistLabel = playlistMeta?.name ?? playlistId
+
+  console.log(`[match-tracks] ▶ "${playlistLabel}" — matching ${tracks.length} tracks`)
 
   try {
+    // Bail out if the playlist no longer exists (e.g. data was wiped)
+    const playlist = await prisma.playlist.findUnique({ where: { id: playlistId } })
+    if (!playlist) {
+      console.warn(`[match-tracks] Playlist ${playlistId} not found, skipping job`)
+      return { matchedCount: 0, unmatchedCount: 0, playlistId }
+    }
+
+    // Clear any existing tracks (handles job retries cleanly)
+    await prisma.playlistTrack.deleteMany({ where: { playlistId } })
+
     let matchedCount = 0
     let unmatchedCount = 0
 
@@ -58,12 +72,12 @@ export async function matchTracksProcessor(
         if (matchResult.spotifyId) {
           matchedCount++
           console.log(
-            `[match-tracks] ✓ Matched: "${track.trackName}" by ${track.artistName} ${matchResult.fromCache ? '(cached)' : '(api)'}`
+            `[match-tracks] [${i + 1}/${tracks.length}] ✓ "${track.trackName}" — ${track.artistName} ${matchResult.fromCache ? '(cache)' : '(api)'}`
           )
         } else {
           unmatchedCount++
           console.log(
-            `[match-tracks] ✗ No match: "${track.trackName}" by ${track.artistName}`
+            `[match-tracks] [${i + 1}/${tracks.length}] ✗ "${track.trackName}" — ${track.artistName}`
           )
         }
       } catch (error) {
@@ -115,7 +129,7 @@ export async function matchTracksProcessor(
     )
 
     console.log(
-      `[match-tracks] Completed: ${matchedCount} matched, ${unmatchedCount} unmatched (${tracks.length} total)`
+      `[match-tracks] ✓ "${playlistLabel}" — ${matchedCount}/${tracks.length} matched, ${unmatchedCount} unmatched`
     )
 
     return {

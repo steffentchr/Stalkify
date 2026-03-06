@@ -35,7 +35,7 @@ export async function fetchLastfmProcessor(
 ): Promise<FetchLastfmJobResult> {
   const { username, processingJobId, isInitialProcess } = job.data
 
-  console.log(`[fetch-lastfm] Processing user: ${username}`)
+  console.log(`[fetch-lastfm] ▶ Starting processing for @${username}`)
 
   try {
     // Update job status
@@ -51,10 +51,12 @@ export async function fetchLastfmProcessor(
     await job.updateProgress(10)
 
     // 1. Check if user exists on Last.fm
+    console.log(`[fetch-lastfm] Checking Last.fm user @${username}...`)
     const userExists = await cachedLastfmClient.userExists(username)
     if (!userExists) {
       throw new Error(`Last.fm user "${username}" not found`)
     }
+    console.log(`[fetch-lastfm] ✓ User @${username} found on Last.fm`)
 
     await job.updateProgress(20)
 
@@ -83,7 +85,7 @@ export async function fetchLastfmProcessor(
     await job.updateProgress(30)
 
     // 3. Fetch Last.fm data in parallel
-    console.log(`[fetch-lastfm] Fetching tracks and artists for ${username}`)
+    console.log(`[fetch-lastfm] Fetching tracks and artists for @${username}...`)
 
     const [recentTracks, topTracksOverall, topTracks7day, topTracks3month, topTracks6month, topTracks12month, topArtists] = await Promise.all([
       cachedLastfmClient.getRecentTracks(username, 20),
@@ -92,13 +94,15 @@ export async function fetchLastfmProcessor(
       cachedLastfmClient.getTopTracks(username, '3month', 50),
       cachedLastfmClient.getTopTracks(username, '6month', 50),
       cachedLastfmClient.getTopTracks(username, '12month', 50),
-      cachedLastfmClient.getTopArtists(username, 'overall', 48),
+      cachedLastfmClient.getTopArtists(username, 'overall', 30),
     ])
 
     await job.updateProgress(50)
 
+    console.log(`[fetch-lastfm] ✓ Fetched tracks — recent:${recentTracks.length} overall:${topTracksOverall.length} 7d:${topTracks7day.length} 3m:${topTracks3month.length} 6m:${topTracks6month.length} 12m:${topTracks12month.length} artists:${topArtists.length}`)
+
     // 4. Store top artists with Spotify images
-    console.log(`[fetch-lastfm] Storing ${topArtists.length} artists, fetching Spotify data`)
+    console.log(`[fetch-lastfm] Fetching Spotify data for ${topArtists.length} artists...`)
 
     // Search Spotify for artist images and URLs (batch of 5 at a time)
     const artistData: Array<{ name: string; imageUrl: string | null; spotifyUrl: string | null; playCount: number }> = []
@@ -108,6 +112,8 @@ export async function fetchLastfmProcessor(
         batch.map(async (artist) => {
           try {
             const spotifyArtist = await spotifyClient.searchArtist(artist.name)
+            const found = !!spotifyArtist
+            console.log(`[fetch-lastfm]   artist ${found ? '✓' : '✗'} ${artist.name}${found ? '' : ' (no Spotify match)'}`)
             return {
               name: artist.name,
               imageUrl: spotifyArtist?.images?.[1]?.url || spotifyArtist?.images?.[0]?.url || null,
@@ -115,6 +121,7 @@ export async function fetchLastfmProcessor(
               playCount: parseInt(String(artist.playcount), 10) || 0,
             }
           } catch {
+            console.log(`[fetch-lastfm]   artist ✗ ${artist.name} (error)`)
             return {
               name: artist.name,
               imageUrl: null,
@@ -125,6 +132,7 @@ export async function fetchLastfmProcessor(
         })
       )
       artistData.push(...results)
+      console.log(`[fetch-lastfm] Artists: ${Math.min(i + 5, topArtists.length)}/${topArtists.length}`)
     }
 
     await prisma.userArtist.deleteMany({
@@ -146,7 +154,7 @@ export async function fetchLastfmProcessor(
     await job.updateProgress(60)
 
     // 5. Queue track matching jobs for each playlist type
-    console.log(`[fetch-lastfm] Queueing track matching jobs`)
+    console.log(`[fetch-lastfm] Queueing track matching jobs for standard playlists...`)
 
     const playlistConfigs: Array<{
       feedType: FeedType
@@ -219,84 +227,94 @@ export async function fetchLastfmProcessor(
             priority: config.feedType === FeedType.RECENT ? 1 : 2, // Recent tracks higher priority
           }
         )
+        console.log(`[fetch-lastfm] ✓ Queued "${playlist.name}" — ${trackData.length} tracks`)
       }
     }
 
     // 6. Create per-year playlists on initial process
     if (isInitialProcess) {
-      console.log(`[fetch-lastfm] Creating per-year playlists for ${username}`)
+      const creationYear = await cachedLastfmClient.getAccountCreationYear(username)
+      const currentYear = new Date().getFullYear()
+      const totalYears = currentYear - creationYear + 1
+
+      console.log(`[fetch-lastfm] Building year playlists for @${username} (${creationYear}–${currentYear}, ${totalYears} years)`)
 
       await prisma.processingJob.update({
         where: { jobId: processingJobId },
         data: { currentStep: 'Building year playlists' },
       })
 
-      const creationYear = await cachedLastfmClient.getAccountCreationYear(username)
-      const currentYear = new Date().getFullYear()
-
+      let yearIndex = 0
       for (let year = creationYear; year <= currentYear; year++) {
-        console.log(`[fetch-lastfm] Fetching scrobbles for ${username} in ${year}`)
+        yearIndex++
+        console.log(`[fetch-lastfm] Year ${year} (${yearIndex}/${totalYears}) — fetching scrobbles...`)
 
-        const scrobbles = await cachedLastfmClient.getAllScrobblesForYear(username, year)
-        const topTracks = aggregateTopTracks(scrobbles, 100)
+        try {
+          const scrobbles = await cachedLastfmClient.getAllScrobblesForYear(username, year)
+          const topTracks = aggregateTopTracks(scrobbles, 100)
 
-        // Skip years with very few unique tracks
-        if (topTracks.length < 10) {
-          console.log(`[fetch-lastfm] Skipping ${year} (only ${topTracks.length} unique tracks)`)
-          continue
-        }
+          // Skip years with very few unique tracks
+          if (topTracks.length < 10) {
+            console.log(`[fetch-lastfm] Year ${year} — skipped (${scrobbles.length} scrobbles, ${topTracks.length} unique tracks)`)
+            continue
+          }
 
-        // Create or get playlist for this year
-        let yearPlaylist = await prisma.playlist.findFirst({
-          where: {
-            userId: user.id,
-            feedType: FeedType.YEAR,
-            year,
-          },
-        })
-
-        if (!yearPlaylist) {
-          const now = new Date()
-          yearPlaylist = await prisma.playlist.create({
-            data: {
+          // Create or get playlist for this year
+          let yearPlaylist = await prisma.playlist.findFirst({
+            where: {
               userId: user.id,
               feedType: FeedType.YEAR,
               year,
-              name: `@${username} / ${year}`,
-              spotifyId: `pending_${user.id}_YEAR_${year}`,
-              spotifyUri: `pending_${user.id}_YEAR_${year}`,
-              updateInterval: 0, // No auto-update for historical years
-              nextUpdateAt: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000), // Far future
             },
           })
+
+          if (!yearPlaylist) {
+            const now = new Date()
+            yearPlaylist = await prisma.playlist.create({
+              data: {
+                userId: user.id,
+                feedType: FeedType.YEAR,
+                year,
+                name: `@${username} / ${year}`,
+                spotifyId: `pending_${user.id}_YEAR_${year}`,
+                spotifyUri: `pending_${user.id}_YEAR_${year}`,
+                updateInterval: year === currentYear ? 1440 : 0,
+                nextUpdateAt: year === currentYear
+                  ? new Date(now.getTime() + 1440 * 60 * 1000)
+                  : new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000), // Far future for historical
+              },
+            })
+          }
+
+          playlistIds.push(yearPlaylist.id)
+
+          // Delete existing tracks
+          await prisma.playlistTrack.deleteMany({
+            where: { playlistId: yearPlaylist.id },
+          })
+
+          const trackData = topTracks.map(t => ({
+            trackName: t.trackName,
+            artistName: t.artistName,
+            albumName: t.albumName,
+          }))
+
+          totalTracks += trackData.length
+
+          await getMatchTracksQueue().add(
+            `match-${yearPlaylist.id}`,
+            {
+              playlistId: yearPlaylist.id,
+              tracks: trackData,
+              processingJobId,
+            } as MatchTracksJobData,
+            { priority: 3 } // Lower priority than standard playlists
+          )
+
+          console.log(`[fetch-lastfm] ✓ Year ${year} — ${scrobbles.length} scrobbles → top ${topTracks.length} tracks queued`)
+        } catch (yearError) {
+          console.error(`[fetch-lastfm] ✗ Year ${year} — failed, skipping:`, yearError instanceof Error ? yearError.message : yearError)
         }
-
-        playlistIds.push(yearPlaylist.id)
-
-        // Delete existing tracks
-        await prisma.playlistTrack.deleteMany({
-          where: { playlistId: yearPlaylist.id },
-        })
-
-        const trackData = topTracks.map(t => ({
-          trackName: t.trackName,
-          artistName: t.artistName,
-          albumName: t.albumName,
-        }))
-
-        totalTracks += trackData.length
-
-        await getMatchTracksQueue().add(
-          `match-${yearPlaylist.id}`,
-          {
-            playlistId: yearPlaylist.id,
-            tracks: trackData,
-            processingJobId,
-          } as MatchTracksJobData,
-          { priority: 3 } // Lower priority than standard playlists
-        )
-
-        console.log(`[fetch-lastfm] Queued ${year} playlist with ${topTracks.length} tracks`)
       }
     }
 
@@ -314,7 +332,7 @@ export async function fetchLastfmProcessor(
 
     await job.updateProgress(100)
 
-    console.log(`[fetch-lastfm] Successfully queued ${playlistIds.length} playlists with ${totalTracks} total tracks`)
+    console.log(`[fetch-lastfm] ✓ Done — ${playlistIds.length} playlists queued, ${totalTracks} total tracks`)
 
     return {
       userId: user.id,
