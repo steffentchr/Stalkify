@@ -14,7 +14,7 @@ import { autoUpdateProcessor } from './processors/auto-update'
 // match-tracks must be 1: all jobs share one Spotify token and rate limiter,
 // so running multiple simultaneously causes burst 403s from Spotify.
 const FETCH_CONCURRENCY = parseInt(process.env.FETCH_CONCURRENCY || '2')
-const MATCH_CONCURRENCY = 1 // intentionally hardcoded — must not exceed 1
+const MATCH_CONCURRENCY = parseInt(process.env.MATCH_CONCURRENCY || '3')
 const SYNC_CONCURRENCY = parseInt(process.env.SYNC_CONCURRENCY || '2')
 
 // Stall detection: jobs active when the worker crashed get moved back to

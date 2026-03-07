@@ -50,25 +50,19 @@ async function fetchSpotify<T>(
   if (response.status === 429 && retries > 0) {
     const retryAfter = parseInt(response.headers.get('Retry-After') || '5', 10)
     const waitMs = (retryAfter + 1) * 1000
-    console.warn(`[spotify] 429 rate limited, retrying after ${retryAfter}s (${retries} retries left)`)
+    const body = await response.json().catch(() => ({}))
+    console.warn(`[spotify] 429 on ${endpoint}, retrying after ${retryAfter}s (${retries} retries left) — body: ${JSON.stringify(body)}`)
     await new Promise(resolve => setTimeout(resolve, waitMs))
     return fetchSpotify<T>(endpoint, options, retries - 1)
   }
 
-  // 403: Spotify sometimes rate-limits via 403 instead of 429 — back off and retry
-  if (response.status === 403 && retries > 0) {
-    const backoff = (4 - retries) * 3000 // 3s, 6s, 9s — escalating backoff
-    console.warn(`[spotify] 403 on ${endpoint}, backing off ${backoff / 1000}s and retrying (${retries} retries left)`)
-    await new Promise(resolve => setTimeout(resolve, backoff))
-    return fetchSpotify<T>(endpoint, options, retries - 1)
-  }
-
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
+    const body = await response.json().catch(() => ({}))
+    console.error(`[spotify] ${response.status} on ${endpoint} — body: ${JSON.stringify(body)}`)
     throw new SpotifyApiError(
       response.status,
-      error.error?.message || response.statusText,
-      error
+      body.error?.message || response.statusText,
+      body
     )
   }
 
