@@ -198,6 +198,19 @@ enum JobStatus {
   CANCELLED
 }
 
+// Index of all playlists on the connected Spotify account.
+// Synced at the start of each fetch-lastfm run to detect existing playlists by name.
+model SpotifyAccountPlaylist {
+  id        String   @id @default(cuid())
+  spotifyId String   @unique
+  name      String
+  uri       String   @unique
+  syncedAt  DateTime @default(now()) @updatedAt
+
+  @@index([name])
+  @@map("spotify_account_playlists")
+}
+
 // Spotify OAuth tokens (for Stalkify account)
 model SpotifyAuth {
   id                String      @id @default(cuid())

@@ -83,6 +83,33 @@ export class SpotifyClient {
   }
 
   /**
+   * Fetch all playlists owned by the given user ID, paginating as needed.
+   */
+  async getMyPlaylists(ownerId: string): Promise<Array<{ id: string; name: string; uri: string }>> {
+    const results: Array<{ id: string; name: string; uri: string }> = []
+    let offset = 0
+    const limit = 50
+
+    while (true) {
+      const page = await fetchSpotify<{
+        items: Array<{ id: string; name: string; uri: string; owner: { id: string } }>
+        next: string | null
+      }>(`/me/playlists?limit=${limit}&offset=${offset}`)
+
+      for (const p of page.items) {
+        if (p.owner.id === ownerId) {
+          results.push({ id: p.id, name: p.name, uri: p.uri })
+        }
+      }
+
+      if (!page.next) break
+      offset += limit
+    }
+
+    return results
+  }
+
+  /**
    * Search for a track
    */
   async searchTrack(
