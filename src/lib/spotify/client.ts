@@ -46,11 +46,16 @@ async function fetchSpotify<T>(
     },
   })
 
-  // Handle rate limiting: back off for Retry-After seconds then retry
+  // Handle rate limiting: back off for Retry-After seconds then retry.
+  // Cap at 30s — if Spotify wants longer, throw so BullMQ retries later.
   if (response.status === 429 && retries > 0) {
     const retryAfter = parseInt(response.headers.get('Retry-After') || '5', 10)
-    const waitMs = (retryAfter + 1) * 1000
     const body = await response.json().catch(() => ({}))
+    if (retryAfter > 30) {
+      console.warn(`[spotify] 429 on ${endpoint}, Retry-After=${retryAfter}s exceeds cap — throwing for BullMQ retry`)
+      throw new SpotifyApiError(429, `Rate limited (Retry-After: ${retryAfter}s)`, body)
+    }
+    const waitMs = (retryAfter + 1) * 1000
     console.warn(`[spotify] 429 on ${endpoint}, retrying after ${retryAfter}s (${retries} retries left) — body: ${JSON.stringify(body)}`)
     await new Promise(resolve => setTimeout(resolve, waitMs))
     return fetchSpotify<T>(endpoint, options, retries - 1)

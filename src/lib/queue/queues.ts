@@ -41,7 +41,12 @@ export function getMatchTracksQueue(): Queue<MatchTracksJobData> {
   if (!_matchTracksQueue) {
     _matchTracksQueue = new Queue<MatchTracksJobData>(QueueName.MATCH_TRACKS, {
       connection: queueConnection,
-      defaultJobOptions: { ...defaultJobOptions, attempts: 2 },
+      defaultJobOptions: {
+        ...defaultJobOptions,
+        // 20 attempts with 1h fixed backoff survives up to 20h of Spotify rate limiting
+        attempts: 20,
+        backoff: { type: 'fixed', delay: 60 * 60 * 1000 },
+      },
     })
   }
   return _matchTracksQueue
