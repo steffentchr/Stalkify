@@ -171,3 +171,25 @@ process.on('SIGINT', shutdown)
 logQueueDepths().then(() => {
   console.log('✓ Workers started and listening for jobs\n')
 })
+
+// Periodic heartbeat: log queue depths every 30s so we can see jobs accumulating
+// even if the worker isn't picking them up
+setInterval(async () => {
+  const names = [QueueName.FETCH_LASTFM, QueueName.MATCH_TRACKS, QueueName.SYNC_PLAYLIST, QueueName.AUTO_UPDATE]
+  const parts: string[] = []
+  for (const name of names) {
+    const q = new Queue(name, { connection: queueConnection })
+    const [waiting, active, delayed, failed] = await Promise.all([
+      q.getWaitingCount(), q.getActiveCount(), q.getDelayedCount(), q.getFailedCount(),
+    ])
+    await q.close()
+    if (waiting + active + delayed + failed > 0) {
+      parts.push(`${name}: ${waiting}w ${active}a ${delayed}d ${failed}f`)
+    }
+  }
+  if (parts.length > 0) {
+    console.log(`[heartbeat] ${parts.join(' | ')}`)
+  } else {
+    console.log('[heartbeat] all queues empty')
+  }
+}, 30_000)
