@@ -86,11 +86,13 @@ export async function fetchLastfmProcessor(
     await job.updateProgress(20)
 
     // 2. Create or get Last.fm user record
+    console.log(`[fetch-lastfm] Looking up DB user record for @${username}...`)
     let user = await prisma.lastfmUser.findUnique({
       where: { username },
     })
 
     if (!user) {
+      console.log(`[fetch-lastfm] Creating new DB user record for @${username}...`)
       user = await prisma.lastfmUser.create({
         data: {
           username,
@@ -98,6 +100,7 @@ export async function fetchLastfmProcessor(
         },
       })
     } else {
+      console.log(`[fetch-lastfm] Updating existing DB user record for @${username}...`)
       await prisma.lastfmUser.update({
         where: { id: user.id },
         data: {
@@ -106,12 +109,16 @@ export async function fetchLastfmProcessor(
         },
       })
     }
+    console.log(`[fetch-lastfm] ✓ DB user record ready for @${username}`)
 
     await job.updateProgress(30)
 
     // 3. Get Spotify user ID and sync playlist index
+    console.log(`[fetch-lastfm] Fetching Spotify current user...`)
     const spotifyUser = await spotifyClient.getCurrentUser()
+    console.log(`[fetch-lastfm] ✓ Spotify user: ${spotifyUser.id}`)
 
+    console.log(`[fetch-lastfm] Fetching Spotify playlists...`)
     const ownedPlaylists = await spotifyClient.getMyPlaylists(spotifyUser.id)
     // Upsert all owned playlists into the index
     for (const p of ownedPlaylists) {

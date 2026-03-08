@@ -37,14 +37,28 @@ async function fetchSpotify<T>(
   const accessToken = await getValidAccessToken()
   const url = `${SPOTIFY_API_URL}${endpoint}`
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30_000)
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') {
+      throw new Error(`Spotify request timed out after 30s: ${endpoint}`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   // Handle rate limiting: back off for Retry-After seconds then retry.
   // Cap at 30s — if Spotify wants longer, throw so BullMQ retries later.
