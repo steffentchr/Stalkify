@@ -47,7 +47,7 @@ export default function PlaylistTable({ playlists, yearPlaylists }: PlaylistTabl
 
       {yearPlaylists && yearPlaylists.length > 0 && (
         <>
-          <h3 style={{ marginBottom: 16 }}>Year in review</h3>
+          <h3 style={{ marginBottom: 16, textAlign: 'center' }}>Year in review</h3>
           <table className="playlists-table">
             <tbody>
               {yearPlaylists.map((playlist) => (

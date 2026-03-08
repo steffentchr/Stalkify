@@ -186,9 +186,6 @@ export default function UserPage({ params }: UserPageProps) {
             <>
               <h3>Top Artists</h3>
               <ArtistGrid artists={userData.artists} />
-              <div className="smallmeta" style={{ marginTop: 40 }}>
-                Click any artist to search on Spotify
-              </div>
             </>
           )}
         </>
