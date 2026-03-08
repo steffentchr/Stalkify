@@ -29,6 +29,17 @@ export async function POST(
     }
 
     // Check if user already has an active processing job
+    // Expire jobs stuck in PENDING/PROCESSING for more than 30 minutes
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000)
+    await prisma.processingJob.updateMany({
+      where: {
+        username,
+        status: { in: ['PENDING', 'PROCESSING'] },
+        createdAt: { lt: thirtyMinutesAgo },
+      },
+      data: { status: 'FAILED', errorMessage: 'Timed out', completedAt: new Date() },
+    })
+
     const existingJob = await prisma.processingJob.findFirst({
       where: {
         username,
