@@ -9,6 +9,7 @@ const SPOTIFY_ACCOUNTS_URL = 'https://accounts.spotify.com'
 const REQUIRED_SCOPES = [
   'playlist-modify-public',
   'playlist-modify-private',
+  'playlist-read-private',
   'user-read-private',
 ]
 

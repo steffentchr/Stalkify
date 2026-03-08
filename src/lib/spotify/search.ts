@@ -100,9 +100,10 @@ export async function matchTrackToSpotify(
     if (spotifyTrack) {
       const confidence = calculateConfidence(trackName, artistName, spotifyTrack)
 
-      // Store in cache
-      await prisma.trackCache.create({
-        data: {
+      // Store in cache (upsert handles concurrent jobs matching the same track)
+      await prisma.trackCache.upsert({
+        where: { searchKey },
+        create: {
           searchKey,
           trackName,
           artistName,
@@ -113,6 +114,7 @@ export async function matchTrackToSpotify(
           matchConfidence: confidence,
           matchMethod: 'api_search',
         },
+        update: {},
       })
 
       return {
@@ -125,8 +127,9 @@ export async function matchTrackToSpotify(
       }
     } else {
       // No match found, cache as null
-      await prisma.trackCache.create({
-        data: {
+      await prisma.trackCache.upsert({
+        where: { searchKey },
+        create: {
           searchKey,
           trackName,
           artistName,
@@ -137,6 +140,7 @@ export async function matchTrackToSpotify(
           matchConfidence: null,
           matchMethod: 'not_found',
         },
+        update: {},
       })
 
       return {
