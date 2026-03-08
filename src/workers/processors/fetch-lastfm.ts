@@ -113,24 +113,15 @@ export async function fetchLastfmProcessor(
 
     await job.updateProgress(30)
 
-    // 3. Get Spotify user ID and sync playlist index
+    // 3. Get Spotify user ID and load playlist index from DB
     console.log(`[fetch-lastfm] Fetching Spotify current user...`)
     const spotifyUser = await spotifyClient.getCurrentUser()
     console.log(`[fetch-lastfm] ✓ Spotify user: ${spotifyUser.id}`)
 
-    console.log(`[fetch-lastfm] Fetching Spotify playlists...`)
-    const ownedPlaylists = await spotifyClient.getMyPlaylists(spotifyUser.id)
-    // Upsert all owned playlists into the index
-    for (const p of ownedPlaylists) {
-      await prisma.spotifyAccountPlaylist.upsert({
-        where: { spotifyId: p.id },
-        create: { spotifyId: p.id, name: p.name, uri: p.uri },
-        update: { name: p.name, uri: p.uri },
-      })
-    }
-    // Name → {id, uri} map for O(1) lookup during playlist creation
-    const spotifyPlaylistByName = new Map(ownedPlaylists.map(p => [p.name, p]))
-    console.log(`[fetch-lastfm] ✓ Synced ${ownedPlaylists.length} Spotify playlists to index`)
+    // Load known playlists from our DB index (avoids paginating Spotify's full library)
+    const knownPlaylists = await prisma.spotifyAccountPlaylist.findMany()
+    const spotifyPlaylistByName = new Map(knownPlaylists.map(p => [p.name, { id: p.spotifyId, name: p.name, uri: p.uri }]))
+    console.log(`[fetch-lastfm] ✓ Loaded ${knownPlaylists.length} playlists from DB index`)
 
     // 4. Fetch Last.fm data in parallel
     console.log(`[fetch-lastfm] Fetching tracks and artists for @${username}...`)
