@@ -3,7 +3,6 @@
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import StatusTable from '@/components/StatusTable'
 import PlaylistTable from '@/components/PlaylistTable'
 import ArtistGrid from '@/components/ArtistGrid'
 
@@ -174,7 +173,6 @@ export default function UserPage({ params }: UserPageProps) {
             Fetching Last.fm data and creating Spotify playlists
           </div>
 
-          <StatusTable status={jobStatus} />
         </>
       )}
 
