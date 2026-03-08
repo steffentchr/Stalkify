@@ -17,7 +17,7 @@ export default function ArtistGrid({ artists }: ArtistGridProps) {
         <a
           key={artist.rank}
           className="lastfmartist"
-          href={artist.spotifyUrl ?? undefined}
+          href={artist.spotifyUrl || `https://open.spotify.com/search/${encodeURIComponent(artist.artistName)}`}
           target="_blank"
           rel="noopener noreferrer"
         >
