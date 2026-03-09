@@ -167,6 +167,55 @@ export async function matchTrackToSpotify(
   }
 }
 
+export interface ArtistMatchResult {
+  spotifyId: string | null
+  spotifyUrl: string | null
+  imageUrl: string | null
+  fromCache: boolean
+}
+
+/**
+ * Match an artist name to Spotify (cache-first, shared across all users)
+ */
+export async function matchArtistToSpotify(artistName: string): Promise<ArtistMatchResult> {
+  const searchKey = artistName.toLowerCase().trim()
+
+  const cached = await prisma.artistCache.findUnique({ where: { searchKey } })
+  if (cached) {
+    await prisma.artistCache.update({
+      where: { id: cached.id },
+      data: { hitCount: { increment: 1 }, lastHitAt: new Date() },
+    })
+    return { spotifyId: cached.spotifyId, spotifyUrl: cached.spotifyUrl, imageUrl: cached.imageUrl, fromCache: true }
+  }
+
+  try {
+    const spotifyArtist = await spotifyClient.searchArtist(artistName)
+
+    await prisma.artistCache.upsert({
+      where: { searchKey },
+      create: {
+        searchKey,
+        artistName,
+        spotifyId: spotifyArtist?.id ?? null,
+        spotifyUrl: spotifyArtist?.external_urls?.spotify ?? null,
+        imageUrl: spotifyArtist?.images?.[1]?.url ?? spotifyArtist?.images?.[0]?.url ?? null,
+      },
+      update: {},
+    })
+
+    return {
+      spotifyId: spotifyArtist?.id ?? null,
+      spotifyUrl: spotifyArtist?.external_urls?.spotify ?? null,
+      imageUrl: spotifyArtist?.images?.[1]?.url ?? spotifyArtist?.images?.[0]?.url ?? null,
+      fromCache: false,
+    }
+  } catch (error) {
+    console.error(`Error matching artist "${artistName}":`, error)
+    return { spotifyId: null, spotifyUrl: null, imageUrl: null, fromCache: false }
+  }
+}
+
 /**
  * Batch match multiple tracks
  */

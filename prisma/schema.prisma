@@ -211,6 +211,26 @@ model SpotifyAccountPlaylist {
   @@map("spotify_account_playlists")
 }
 
+// Cache for artist name → Spotify artist lookup (shared across all users)
+model ArtistCache {
+  id         String   @id @default(cuid())
+  searchKey  String   @unique // normalized artist name (lowercased, trimmed)
+  artistName String   // original casing
+
+  // Spotify match (null = not found)
+  spotifyId  String?
+  spotifyUrl String?
+  imageUrl   String?
+
+  // Stats
+  cachedAt   DateTime @default(now())
+  hitCount   Int      @default(1)
+  lastHitAt  DateTime @default(now())
+
+  @@index([searchKey])
+  @@map("artist_cache")
+}
+
 // Spotify OAuth tokens (for Stalkify account)
 model SpotifyAuth {
   id                String      @id @default(cuid())

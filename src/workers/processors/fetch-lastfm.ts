@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { cachedLastfmClient } from '@/lib/lastfm/cache'
 import { aggregateTopTracks } from '@/lib/lastfm/aggregate'
 import { spotifyClient } from '@/lib/spotify/client'
+import { matchArtistToSpotify } from '@/lib/spotify/search'
 import { getMatchTracksQueue } from '@/lib/queue/queues'
 import {
   FetchLastfmJobData,
@@ -143,30 +144,19 @@ export async function fetchLastfmProcessor(
     // 5. Store top artists with Spotify images
     console.log(`[fetch-lastfm] Fetching Spotify data for ${topArtists.length} artists...`)
 
-    // Search Spotify for artist images and URLs (batch of 5 at a time)
+    // Match artists to Spotify (cache-first, shared across all users)
     const artistData: Array<{ name: string; imageUrl: string | null; spotifyUrl: string | null; playCount: number }> = []
     for (let i = 0; i < topArtists.length; i += 5) {
       const batch = topArtists.slice(i, i + 5)
       const results = await Promise.all(
         batch.map(async (artist) => {
-          try {
-            const spotifyArtist = await spotifyClient.searchArtist(artist.name)
-            const found = !!spotifyArtist
-            console.log(`[fetch-lastfm]   artist ${found ? '✓' : '✗'} ${artist.name}${found ? '' : ' (no Spotify match)'}`)
-            return {
-              name: artist.name,
-              imageUrl: spotifyArtist?.images?.[1]?.url || spotifyArtist?.images?.[0]?.url || null,
-              spotifyUrl: spotifyArtist?.external_urls?.spotify || null,
-              playCount: parseInt(String(artist.playcount), 10) || 0,
-            }
-          } catch {
-            console.log(`[fetch-lastfm]   artist ✗ ${artist.name} (error)`)
-            return {
-              name: artist.name,
-              imageUrl: null,
-              spotifyUrl: null,
-              playCount: parseInt(String(artist.playcount), 10) || 0,
-            }
+          const match = await matchArtistToSpotify(artist.name)
+          console.log(`[fetch-lastfm]   artist ${match.spotifyId ? '✓' : '✗'} ${artist.name}${match.fromCache ? ' (cache)' : ''}`)
+          return {
+            name: artist.name,
+            imageUrl: match.imageUrl,
+            spotifyUrl: match.spotifyUrl,
+            playCount: parseInt(String(artist.playcount), 10) || 0,
           }
         })
       )
