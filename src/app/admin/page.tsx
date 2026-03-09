@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { UserActions } from './UserActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -121,7 +122,8 @@ export default async function AdminPage() {
               <tr style={{ borderBottom: '1px solid #eee' }}>
                 <th style={{ textAlign: 'left', padding: '4px 8px 8px 0', color: '#888', fontWeight: 500 }}>Username</th>
                 <th style={{ textAlign: 'right', padding: '4px 0 8px', color: '#888', fontWeight: 500 }}>Runs</th>
-                <th style={{ textAlign: 'right', padding: '4px 0 8px 8px', color: '#888', fontWeight: 500 }}>Last run</th>
+                <th style={{ textAlign: 'right', padding: '4px 0 8px', color: '#888', fontWeight: 500 }}>Last run</th>
+                <th style={{ padding: '4px 0 8px' }} />
               </tr>
             </thead>
             <tbody>
@@ -131,13 +133,16 @@ export default async function AdminPage() {
                     <Link href={`/${u.username}`} style={{ color: '#000', fontWeight: 500 }}>{u.username}</Link>
                   </td>
                   <td style={{ textAlign: 'right', padding: '6px 0', color: '#666' }}>{u.processCount}</td>
-                  <td style={{ textAlign: 'right', padding: '6px 0 6px 8px', color: '#999', whiteSpace: 'nowrap' }}>
+                  <td style={{ textAlign: 'right', padding: '6px 8px', color: '#999', whiteSpace: 'nowrap' }}>
                     {timeAgo(u.lastProcessedAt)}
+                  </td>
+                  <td style={{ padding: '6px 0', whiteSpace: 'nowrap' }}>
+                    <UserActions username={u.username} />
                   </td>
                 </tr>
               ))}
               {stats.recentUsers.length === 0 && (
-                <tr><td colSpan={3} style={{ padding: '12px 0', color: '#aaa', fontStyle: 'italic' }}>No users yet</td></tr>
+                <tr><td colSpan={4} style={{ padding: '12px 0', color: '#aaa', fontStyle: 'italic' }}>No users yet</td></tr>
               )}
             </tbody>
           </table>
