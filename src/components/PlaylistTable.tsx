@@ -6,6 +6,7 @@ interface Playlist {
   spotifyUri: string
   spotifyUrl: string
   trackCount: number
+  matchedTrackCount?: number
   lastUpdatedAt?: string
 }
 
@@ -15,6 +16,7 @@ interface YearPlaylist {
   spotifyUri: string
   spotifyUrl: string
   trackCount: number
+  matchedTrackCount?: number
 }
 
 interface PlaylistTableProps {
@@ -44,6 +46,9 @@ export default function PlaylistTable({ playlists, yearPlaylists }: PlaylistTabl
                   className={playlist.trackCount === 0 ? 'playlist-syncing' : undefined}>
                   {playlist.name}
                 </SpotifyLink>
+                {playlist.matchedTrackCount !== undefined && playlist.trackCount < playlist.matchedTrackCount && (
+                  <span className="playlist-sync-progress">({playlist.trackCount}/{playlist.matchedTrackCount})</span>
+                )}
               </td>
             </tr>
           ))}
@@ -63,6 +68,9 @@ export default function PlaylistTable({ playlists, yearPlaylists }: PlaylistTabl
                       className={playlist.trackCount === 0 ? 'playlist-syncing' : undefined}>
                       {playlist.name}
                     </SpotifyLink>
+                    {playlist.matchedTrackCount !== undefined && playlist.trackCount < playlist.matchedTrackCount && (
+                      <span className="playlist-sync-progress">({playlist.trackCount}/{playlist.matchedTrackCount})</span>
+                    )}
                   </td>
                 </tr>
               ))}

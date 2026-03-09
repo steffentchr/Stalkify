@@ -221,6 +221,12 @@ p {
   animation: playlist-sync-pulse 2s ease-in-out infinite;
 }
 
+.playlist-sync-progress {
+  margin-left: 6px;
+  color: #888;
+  font-size: 0.85em;
+}
+
 /* Artists Grid */
 
 #artistsContainer {

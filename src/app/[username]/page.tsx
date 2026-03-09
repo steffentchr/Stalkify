@@ -30,6 +30,7 @@ interface UserData {
     spotifyUri: string
     spotifyUrl: string
     trackCount: number
+    matchedTrackCount?: number
     lastUpdatedAt: string
   }>
   yearPlaylists?: Array<{
@@ -38,6 +39,7 @@ interface UserData {
     spotifyUri: string
     spotifyUrl: string
     trackCount: number
+    matchedTrackCount?: number
   }>
   artists?: Array<{
     artistName: string

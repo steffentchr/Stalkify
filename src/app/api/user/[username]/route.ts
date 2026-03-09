@@ -13,6 +13,11 @@ export async function GET(
         playlists: {
           where: { spotifyId: { not: { startsWith: 'pending_' } } },
           orderBy: { feedType: 'asc' },
+          include: {
+            _count: {
+              select: { tracks: { where: { spotifyId: { not: null } } } },
+            },
+          },
         },
         artists: {
           where: { period: 'overall' },
@@ -52,6 +57,7 @@ export async function GET(
           spotifyUri: p.spotifyUri,
           spotifyUrl: playlistWebUrl(p.spotifyId),
           trackCount: p.trackCount,
+          matchedTrackCount: p._count.tracks,
           lastUpdatedAt: p.lastUpdatedAt,
         })),
       yearPlaylists: user.playlists
@@ -63,6 +69,7 @@ export async function GET(
           spotifyUri: p.spotifyUri,
           spotifyUrl: playlistWebUrl(p.spotifyId),
           trackCount: p.trackCount,
+          matchedTrackCount: p._count.tracks,
         })),
       artists: user.artists.map((a) => ({
         artistName: a.artistName,
