@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exchangeCodeForTokens, storeTokens } from '@/lib/spotify/auth'
+import { checkBasicAuth } from '@/lib/basicAuth'
 
 /**
  * Spotify OAuth callback handler
  * This receives the authorization code and exchanges it for tokens
  */
 export async function GET(request: NextRequest) {
+  const denied = checkBasicAuth(request)
+  if (denied) return denied
+
   const searchParams = request.nextUrl.searchParams
   const code = searchParams.get('code')
   const error = searchParams.get('error')
