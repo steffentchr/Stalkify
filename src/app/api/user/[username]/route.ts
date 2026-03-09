@@ -38,7 +38,7 @@ export async function GET(
       orderBy: { createdAt: 'desc' },
     })
 
-    const spotifyUrl = (id: string) => `https://open.spotify.com/playlist/${id}`
+    const playlistWebUrl = (id: string) => `https://open.spotify.com/playlist/${id}`
 
     return NextResponse.json({
       status: activeJob ? 'processing' : 'exists',
@@ -49,7 +49,8 @@ export async function GET(
         .map((p) => ({
           feedType: p.feedType,
           name: p.name,
-          spotifyUrl: spotifyUrl(p.spotifyId),
+          spotifyUri: p.spotifyUri,
+          spotifyUrl: playlistWebUrl(p.spotifyId),
           trackCount: p.trackCount,
           lastUpdatedAt: p.lastUpdatedAt,
         })),
@@ -59,7 +60,8 @@ export async function GET(
         .map((p) => ({
           year: p.year,
           name: p.name,
-          spotifyUrl: spotifyUrl(p.spotifyId),
+          spotifyUri: p.spotifyUri,
+          spotifyUrl: playlistWebUrl(p.spotifyId),
           trackCount: p.trackCount,
         })),
       artists: user.artists.map((a) => ({

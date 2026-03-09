@@ -1,6 +1,9 @@
+import { SpotifyLink } from './SpotifyLink'
+
 interface Playlist {
   feedType: string
   name: string
+  spotifyUri: string
   spotifyUrl: string
   trackCount: number
   lastUpdatedAt?: string
@@ -9,6 +12,7 @@ interface Playlist {
 interface YearPlaylist {
   year: number
   name: string
+  spotifyUri: string
   spotifyUrl: string
   trackCount: number
 }
@@ -36,9 +40,9 @@ export default function PlaylistTable({ playlists, yearPlaylists }: PlaylistTabl
             <tr key={playlist.feedType}>
               <td className="playlist-name">{feedTypeLabels[playlist.feedType] || playlist.feedType}</td>
               <td className="playlist-desc">
-                <a href={playlist.spotifyUrl} target="_blank" rel="noopener noreferrer">
+                <SpotifyLink spotifyUri={playlist.spotifyUri} webUrl={playlist.spotifyUrl}>
                   {playlist.name}
-                </a>
+                </SpotifyLink>
               </td>
             </tr>
           ))}
@@ -54,9 +58,9 @@ export default function PlaylistTable({ playlists, yearPlaylists }: PlaylistTabl
                 <tr key={playlist.year}>
                   <td className="playlist-name">{playlist.year}</td>
                   <td className="playlist-desc">
-                    <a href={playlist.spotifyUrl} target="_blank" rel="noopener noreferrer">
+                    <SpotifyLink spotifyUri={playlist.spotifyUri} webUrl={playlist.spotifyUrl}>
                       {playlist.name}
-                    </a>
+                    </SpotifyLink>
                   </td>
                 </tr>
               ))}

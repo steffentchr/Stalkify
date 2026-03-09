@@ -27,6 +27,7 @@ interface UserData {
   playlists?: Array<{
     feedType: string
     name: string
+    spotifyUri: string
     spotifyUrl: string
     trackCount: number
     lastUpdatedAt: string
@@ -34,6 +35,7 @@ interface UserData {
   yearPlaylists?: Array<{
     year: number
     name: string
+    spotifyUri: string
     spotifyUrl: string
     trackCount: number
   }>
