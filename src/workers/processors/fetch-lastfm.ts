@@ -119,8 +119,21 @@ export async function fetchLastfmProcessor(
     const spotifyUser = await spotifyClient.getCurrentUser()
     console.log(`[fetch-lastfm] ✓ Spotify user: ${spotifyUser.id}`)
 
-    // Load known playlists from our DB index (avoids paginating Spotify's full library)
-    const knownPlaylists = await prisma.spotifyAccountPlaylist.findMany()
+    // Load playlist index from DB. On the very first run (empty table), seed it
+    // once from the Spotify API — after that, only playlist creations update it.
+    let knownPlaylists = await prisma.spotifyAccountPlaylist.findMany()
+    if (knownPlaylists.length === 0) {
+      console.log(`[fetch-lastfm] DB playlist index empty — seeding from Spotify API (one-time)...`)
+      const ownedPlaylists = await spotifyClient.getMyPlaylists(spotifyUser.id)
+      if (ownedPlaylists.length > 0) {
+        await prisma.spotifyAccountPlaylist.createMany({
+          data: ownedPlaylists.map(p => ({ spotifyId: p.id, name: p.name, uri: p.uri })),
+          skipDuplicates: true,
+        })
+        knownPlaylists = await prisma.spotifyAccountPlaylist.findMany()
+        console.log(`[fetch-lastfm] ✓ Seeded ${knownPlaylists.length} playlists into DB index`)
+      }
+    }
     const spotifyPlaylistByName = new Map(knownPlaylists.map(p => [p.name, { id: p.spotifyId, name: p.name, uri: p.uri }]))
     console.log(`[fetch-lastfm] ✓ Loaded ${knownPlaylists.length} playlists from DB index`)
 
