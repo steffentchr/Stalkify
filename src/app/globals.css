@@ -212,6 +212,15 @@ p {
   color: #aaa !important;
 }
 
+@keyframes playlist-sync-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
+.playlist-syncing {
+  animation: playlist-sync-pulse 2s ease-in-out infinite;
+}
+
 /* Artists Grid */
 
 #artistsContainer {

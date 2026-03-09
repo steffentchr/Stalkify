@@ -40,7 +40,8 @@ export default function PlaylistTable({ playlists, yearPlaylists }: PlaylistTabl
             <tr key={playlist.feedType}>
               <td className="playlist-name">{feedTypeLabels[playlist.feedType] || playlist.feedType}</td>
               <td className="playlist-desc">
-                <SpotifyLink spotifyUri={playlist.spotifyUri} webUrl={playlist.spotifyUrl}>
+                <SpotifyLink spotifyUri={playlist.spotifyUri} webUrl={playlist.spotifyUrl}
+                  className={playlist.trackCount === 0 ? 'playlist-syncing' : undefined}>
                   {playlist.name}
                 </SpotifyLink>
               </td>
@@ -58,7 +59,8 @@ export default function PlaylistTable({ playlists, yearPlaylists }: PlaylistTabl
                 <tr key={playlist.year}>
                   <td className="playlist-name">{playlist.year}</td>
                   <td className="playlist-desc">
-                    <SpotifyLink spotifyUri={playlist.spotifyUri} webUrl={playlist.spotifyUrl}>
+                    <SpotifyLink spotifyUri={playlist.spotifyUri} webUrl={playlist.spotifyUrl}
+                      className={playlist.trackCount === 0 ? 'playlist-syncing' : undefined}>
                       {playlist.name}
                     </SpotifyLink>
                   </td>
