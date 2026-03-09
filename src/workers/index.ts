@@ -2,13 +2,45 @@ import { config } from 'dotenv'
 config({ path: '.env.local', override: true })
 config({ path: '.env' })
 
-import { Worker, Queue } from 'bullmq'
+import { Worker, Queue, DelayedError } from 'bullmq'
+import type { Job } from 'bullmq'
 import { queueConnection } from '@/lib/queue/connection'
 import { QueueName } from '@/lib/queue/types'
 import { fetchLastfmProcessor } from './processors/fetch-lastfm'
 import { matchTracksProcessor } from './processors/match-tracks'
 import { syncPlaylistProcessor } from './processors/sync-playlist'
 import { autoUpdateProcessor } from './processors/auto-update'
+import { SpotifyRateLimitedError, getBackoffUntil } from '@/lib/spotify/backoff'
+
+/**
+ * Wraps a processor so that SpotifyRateLimitedError moves the job to the
+ * BullMQ delayed queue (at the backoff expiry time) instead of marking it
+ * failed. The job resumes automatically when the delay expires — no retry
+ * attempts are consumed.
+ */
+function withSpotifyBackoff<T>(
+  processor: (job: Job<T>) => Promise<unknown>
+): (job: Job<T>, token: string) => Promise<unknown> {
+  return async (job: Job<T>, token: string) => {
+    try {
+      return await processor(job)
+    } catch (error) {
+      if (error instanceof SpotifyRateLimitedError) {
+        console.warn(
+          `[${job.queueName}] ⏸ Job ${job.id} parked until ` +
+          `${new Date(error.until).toISOString()} — Spotify rate limited`
+        )
+        try {
+          await job.moveToDelayed(error.until, token)
+        } catch {
+          // Token may have expired; BullMQ will stall-detect and requeue
+        }
+        throw new DelayedError()
+      }
+      throw error
+    }
+  }
+}
 
 // Concurrency per worker type.
 // match-tracks must be 1: all jobs share one Spotify token and rate limiter,
@@ -67,7 +99,7 @@ async function logQueueDepths() {
  */
 const fetchLastfmWorker = new Worker(
   QueueName.FETCH_LASTFM,
-  fetchLastfmProcessor,
+  withSpotifyBackoff(fetchLastfmProcessor),
   { ...workerOpts, concurrency: FETCH_CONCURRENCY }
 )
 
@@ -87,7 +119,7 @@ fetchLastfmWorker.on('stalled', (jobId) => {
  */
 const matchTracksWorker = new Worker(
   QueueName.MATCH_TRACKS,
-  matchTracksProcessor,
+  withSpotifyBackoff(matchTracksProcessor),
   { ...workerOpts, concurrency: MATCH_CONCURRENCY }
 )
 
@@ -107,7 +139,7 @@ matchTracksWorker.on('stalled', (jobId) => {
  */
 const syncPlaylistWorker = new Worker(
   QueueName.SYNC_PLAYLIST,
-  syncPlaylistProcessor,
+  withSpotifyBackoff(syncPlaylistProcessor),
   { ...workerOpts, concurrency: SYNC_CONCURRENCY }
 )
 
@@ -127,7 +159,7 @@ syncPlaylistWorker.on('stalled', (jobId) => {
  */
 const autoUpdateWorker = new Worker(
   QueueName.AUTO_UPDATE,
-  autoUpdateProcessor,
+  withSpotifyBackoff(autoUpdateProcessor),
   { ...workerOpts, concurrency: FETCH_CONCURRENCY }
 )
 
@@ -172,8 +204,7 @@ logQueueDepths().then(() => {
   console.log('✓ Workers started and listening for jobs\n')
 })
 
-// Periodic heartbeat: log queue depths every 30s so we can see jobs accumulating
-// even if the worker isn't picking them up
+// Periodic heartbeat: log queue depths + Spotify backoff status every 30s
 setInterval(async () => {
   const names = [QueueName.FETCH_LASTFM, QueueName.MATCH_TRACKS, QueueName.SYNC_PLAYLIST, QueueName.AUTO_UPDATE]
   const parts: string[] = []
@@ -187,6 +218,14 @@ setInterval(async () => {
       parts.push(`${name}: ${waiting}w ${active}a ${delayed}d ${failed}f`)
     }
   }
+
+  const backoffUntil = await getBackoffUntil()
+  const remainingMs = backoffUntil - Date.now()
+  if (remainingMs > 0) {
+    const remainingSecs = Math.ceil(remainingMs / 1000)
+    parts.unshift(`⏸ Spotify backoff: ${remainingSecs}s remaining`)
+  }
+
   if (parts.length > 0) {
     console.log(`[heartbeat] ${parts.join(' | ')}`)
   } else {

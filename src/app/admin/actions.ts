@@ -28,7 +28,7 @@ export async function triggerUpdate(username: string) {
   await getFetchLastfmQueue().add(
     'fetch',
     { username, processingJobId: jobId, isInitialProcess: false },
-    { jobId, removeOnComplete: 100, removeOnFail: 500 }
+    { jobId, priority: 1, removeOnComplete: 100, removeOnFail: 500 }
   )
 
   revalidatePath('/admin')
@@ -57,7 +57,7 @@ export async function fullRebuild(username: string) {
   await getFetchLastfmQueue().add(
     'fetch',
     { username, processingJobId: jobId, isInitialProcess: true },
-    { jobId, removeOnComplete: 100, removeOnFail: 500 }
+    { jobId, priority: 1, removeOnComplete: 100, removeOnFail: 500 }
   )
 
   revalidatePath('/admin')

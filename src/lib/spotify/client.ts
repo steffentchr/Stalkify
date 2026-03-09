@@ -1,4 +1,5 @@
 import { getValidAccessToken } from './auth'
+import { checkBackoff, setBackoff } from './backoff'
 import {
   SpotifyApiError,
   SpotifyArtist,
@@ -32,6 +33,9 @@ async function fetchSpotify<T>(
   options: RequestInit = {},
   retries = 3
 ): Promise<T> {
+  // Global circuit breaker: throws SpotifyRateLimitedError if backoff is active
+  await checkBackoff()
+
   await rateLimit()
 
   const accessToken = await getValidAccessToken()
@@ -60,19 +64,13 @@ async function fetchSpotify<T>(
     clearTimeout(timeoutId)
   }
 
-  // Handle rate limiting: back off for Retry-After seconds then retry.
-  // Cap at 30s — if Spotify wants longer, throw so BullMQ retries later.
-  if (response.status === 429 && retries > 0) {
-    const retryAfter = parseInt(response.headers.get('Retry-After') || '5', 10)
-    const body = await response.json().catch(() => ({}))
-    if (retryAfter > 30) {
-      console.warn(`[spotify] 429 on ${endpoint}, Retry-After=${retryAfter}s exceeds cap — throwing for BullMQ retry`)
-      throw new SpotifyApiError(429, `Rate limited (Retry-After: ${retryAfter}s)`, body)
-    }
-    const waitMs = (retryAfter + 1) * 1000
-    console.warn(`[spotify] 429 on ${endpoint}, retrying after ${retryAfter}s (${retries} retries left) — body: ${JSON.stringify(body)}`)
-    await new Promise(resolve => setTimeout(resolve, waitMs))
-    return fetchSpotify<T>(endpoint, options, retries - 1)
+  // 429: set global backoff (min 10 min) and throw so the job parks in delayed queue
+  if (response.status === 429) {
+    const retryAfter = parseInt(response.headers.get('Retry-After') || '30', 10)
+    await response.json().catch(() => ({})) // drain body
+    const until = await setBackoff(retryAfter)
+    const { SpotifyRateLimitedError } = await import('./backoff')
+    throw new SpotifyRateLimitedError(until)
   }
 
   if (!response.ok) {

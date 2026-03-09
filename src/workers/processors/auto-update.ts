@@ -139,13 +139,15 @@ export async function autoUpdateProcessor(
     await job.updateProgress(70)
 
     // 4. Queue match and sync jobs
+    // Lower priority than new-user processing jobs (which use priority 1–3)
     await getMatchTracksQueue().add(
       `match-${playlistId}`,
       {
         playlistId,
         tracks: trackData,
         processingJobId: tempJobId,
-      } as MatchTracksJobData
+      } as MatchTracksJobData,
+      { priority: 10 }
     )
 
     await job.updateProgress(90)

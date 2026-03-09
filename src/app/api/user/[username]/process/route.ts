@@ -77,6 +77,7 @@ export async function POST(
       },
       {
         jobId,
+        priority: 1, // highest — beats auto-update refresh jobs
         removeOnComplete: 100,
         removeOnFail: 500,
       }

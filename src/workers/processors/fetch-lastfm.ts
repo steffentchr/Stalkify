@@ -5,6 +5,7 @@ import { cachedLastfmClient } from '@/lib/lastfm/cache'
 import { aggregateTopTracks } from '@/lib/lastfm/aggregate'
 import { spotifyClient } from '@/lib/spotify/client'
 import { matchArtistToSpotify } from '@/lib/spotify/search'
+import { SpotifyRateLimitedError } from '@/lib/spotify/backoff'
 import { getMatchTracksQueue } from '@/lib/queue/queues'
 import {
   FetchLastfmJobData,
@@ -452,9 +453,12 @@ export async function fetchLastfmProcessor(
       totalArtists: topArtists.length,
     }
   } catch (error) {
+    // Rate-limit pause: let withSpotifyBackoff move the job to delayed.
+    // Don't mark as FAILED — the job will resume when the backoff expires.
+    if (error instanceof SpotifyRateLimitedError) throw error
+
     console.error(`[fetch-lastfm] Error processing ${username}:`, error)
 
-    // Update job as failed
     await prisma.processingJob.update({
       where: { jobId: processingJobId },
       data: {
