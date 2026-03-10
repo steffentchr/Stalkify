@@ -20,8 +20,8 @@ import { SpotifyRateLimitedError, getBackoffUntil } from '@/lib/spotify/backoff'
  */
 function withSpotifyBackoff<T>(
   processor: (job: Job<T>) => Promise<unknown>
-): (job: Job<T>, token: string) => Promise<unknown> {
-  return async (job: Job<T>, token: string) => {
+): (job: Job<T>, token?: string) => Promise<unknown> {
+  return async (job: Job<T>, token?: string) => {
     try {
       return await processor(job)
     } catch (error) {
